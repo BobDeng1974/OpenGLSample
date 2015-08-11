@@ -4,102 +4,104 @@
 
 namespace Simple
 {
+    GLint g_gui_width = 1;
+    GLint g_gui_height = 1;
 
-        GLRender *glRender = NULL;
-        Gui      *glGui = NULL;
+    const unsigned int MAX_QUAD = 1000;
+    GLint g_gui_num = 0;
+    GLfloat g_gui_vertexs[MAX_QUAD * 4 * 3];
+    GLfloat g_gui_colors[MAX_QUAD * 4 * 3];
+    GLfloat g_gui_indices[MAX_QUAD * 4];
 
-        std::vector<Window*> renderWins;
+    std::vector<Window*> renderWins;
+    Gui* glGui = NULL;
 
-        const unsigned int MAX_TRIANGLE = 1000;
-        GLsizei g_count = 0;
-        GLfloat g_vers[MAX_TRIANGLE * 4 * 3];
-        GLbyte g_cors[MAX_TRIANGLE * 3];
-        GLint g_indices[MAX_TRIANGLE * 4];
+    inline void store_rect(int i, float x, float y, float w, float h)
+    {
+        x /= g_gui_width;
+        y /= g_gui_height;
+        w /= g_gui_width;
+        h /= g_gui_height;
 
-        void storeTriangle(int i, float x, float y, float w, float h)
-        {
-           // 4个顶点
-           // 顶点1
-            g_vers[i * 12] = x;
-            g_vers[i * 12 + 1] = y;
-            g_vers[i * 12 + 2] = 0;
-            // 顶点2
-            g_vers[i * 12 + 3] = x + w;
-            g_vers[i * 12 + 4] = y;
-            g_vers[i * 12 + 5] = 0;
-            // 顶点3
-            g_vers[i * 12 + 6] = x;
-            g_vers[i * 12 + 7] = y + h;
-            g_vers[i * 12 + 8] = 0;
-            // 顶点4
-            g_vers[i * 12 + 9] = x + w;
-            g_vers[i * 12 + 10] = y + h;
-            g_vers[i * 12 + 11] = 0;
+        // 4 vertex
+        // vertex 1
+        g_gui_vertexs[i * 12] = x;
+        g_gui_vertexs[i * 12 + 1] = y;
+        g_gui_vertexs[i * 12 + 2] = 0;
+        // vertex 2
+        g_gui_vertexs[i * 12 + 3] = x + w;
+        g_gui_vertexs[i * 12 + 4] = y;
+        g_gui_vertexs[i * 12 + 5] = 0;
+        // vertex 3
+        g_gui_vertexs[i * 12 + 6] = x + w;
+        g_gui_vertexs[i * 12 + 7] = y + h;
+        g_gui_vertexs[i * 12 + 8] = 0;
+        // vertex 4
+        g_gui_vertexs[i * 12 + 9] = x;
+        g_gui_vertexs[i * 12 + 10] = y + h;
+        g_gui_vertexs[i * 12 + 11] = 0;
+    }
 
-            g_indices[i * 4] = i * 12;
-            g_indices[i * 4 + 1] = i * 12 + 1;
-            g_indices[i * 4 + 2] = i * 12 + 2;
-            g_indices[i * 4 + 3] = i * 12 + 3;
-        }
+    inline void stre_indice(int i)
+    {
+        g_gui_indices[i * 4] = i * 12;
+        g_gui_indices[i * 4 + 1] = i * 12 + 1;
+        g_gui_indices[i * 4 + 2] = i * 12 + 2;
+        g_gui_indices[i * 4 + 3] = i * 12 + 3;
+    }
 
-        void storeColor(int i, Color c)
-        {
-            g_cors[i * 3] = c.r;
-            g_cors[i * 3 + 1] = c.g;
-            g_cors[i * 3 + 2] = c.b;
-        }
+    inline void store_color(int i, float r, float g, float b)
+    {
+        g_gui_colors[i * 3] = r;
+        g_gui_colors[i * 3 + 1] = g;
+        g_gui_colors[i * 3 + 2] = b;
+    }
 
-        void pushRect(float x, float y, float w, float h, Color c)
-        {
-            storeColor(g_count, c);
-            storeTriangle(g_count, x, y, w, h);
-            g_count++;
-        }
+    void gui_set_view(float w, float h)
+    {
+        g_gui_width = w;
+        g_gui_height = h;
+    }
 
-        void do_render()
-        {
-            if (g_count > 0)
-            {
-                glEnableClientState(GL_VERTEX_ARRAY);
-                glEnableClientState(GL_COLOR_ARRAY);
+    void gui_add_rect(float x, float y, float w, float h, float r, float g, float b)
+    {
+        assert(g_gui_num < MAX_QUAD);
+        store_rect(g_gui_num, x, y, w, h);
+        stre_indice(g_gui_num);
+        store_color(g_gui_num, r, g, b);
+        g_gui_num++;
+    }
 
-                glVertexPointer(3, GL_FLOAT, 0, g_vers);
-                glColorPointer(3, GL_BYTE, 0, g_cors);
-                glDrawElements(GL_TRIANGLE_STRIP, g_count, GL_UNSIGNED_INT, g_indices);
-            }
-        }
-
-        //===========================================================
-        // render
-        GLRender::GLRender(){}
-        //===========================================================
-        //
-        void GLRender::pushWindow(float x, float y, float w, float h, Color c)
-        {
-            storeColor(g_count, c);
-            storeTriangle(g_count, x, y, w, h);
-            g_count++;
-        }
-        //===========================================================
-        //
-        void GLRender::render()
-        {
-            g_count = 0;
-            std::vector<Window*>::iterator i = renderWins.begin();
+    void gui_update()
+    {
+        gui_clear();
+        std::vector<Window*>::iterator i = renderWins.begin();
             for (; i != renderWins.end(); ++i)
                 (*i)->draw();
+    }
 
-            // 进行整体绘制
-            if (g_count > 0)
-            {
-                glEnableClientState(GL_VERTEX_ARRAY);
-                glEnableClientState(GL_COLOR_ARRAY);
+    void gui_render()
+    {
+        if (g_gui_num > 0)
+        {
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glVertexPointer(3, GL_FLOAT, 0, g_gui_vertexs);
 
-                glVertexPointer(3, GL_FLOAT, 0, g_vers);
-                glColorPointer(3, GL_BYTE, 0, g_cors);
-                glDrawElements(GL_TRIANGLE_STRIP, g_count, GL_UNSIGNED_INT, g_indices);
-            }
+            glEnableClientState(GL_COLOR_ARRAY);
+            glColorPointer(3, GL_FLOAT, 0, g_gui_colors);
+
+            glDrawElements(GL_QUADS, g_gui_num * 4, GL_UNSIGNED_INT, g_gui_indices);
+
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_COLOR_ARRAY);
         }
+    }
+
+    void gui_clear()
+    {
+        g_gui_num = 0;
+    }
+
         //===========================================================
         //
         Window::Window()
@@ -182,7 +184,7 @@ namespace Simple
         //
         void Window::draw(float x, float y)
         {
-            glRender->pushWindow(mPosition.x + x, mPosition.y + y, mSize.w, mSize.h, mColor);
+            gui_add_rect(mPosition.x + x, mPosition.y + y, mSize.w, mSize.h, mColor.r, mColor.g, mColor.b);
             std::vector<Window*>::iterator i = mChildren.begin();
             for (; i != mChildren.end(); ++i)
                 (*i)->draw(mPosition.x + x, mPosition.y + y);
@@ -279,9 +281,7 @@ namespace Simple
         //
         Gui* Gui::create()
         {
-            assert(glRender == NULL);
             assert(glGui == NULL);
-            glRender = new GLRender();
             glGui = new Gui();
             return glGui;
         }
@@ -293,8 +293,6 @@ namespace Simple
             for (; i != renderWins.end(); ++i)
                 delete (*i);
             renderWins.clear();
-            delete glRender;
-            glRender = NULL;
             delete glGui;
             glGui = NULL;
         }
@@ -387,7 +385,7 @@ namespace Simple
         //
         void Gui::render()
         {
-            assert(glRender);
-            glRender->render();
+            gui_update();
+            gui_render();
         }
 }

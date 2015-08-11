@@ -81,11 +81,11 @@ static void init()
     //Simple::pushRect(0, 0, 300, 200, Simple::Color(100, 100, 100));
 }
 
-
-
 static void resize(int width, int height)
 {
     const float ar = (float) width / (float) height;
+
+    gui_set_view(width, height);
 
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);    // ͸�ӱ任
@@ -96,13 +96,8 @@ static void resize(int width, int height)
     glLoadIdentity() ;
 }
 
-static void display(void)
+void test_draw()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
-    glColor3d(1,0,0);
-    glTranslated(0, 0, -6);
-
     const GLfloat vers[][3] = {
          0.0f,0.0f,0.0f,
          25.0f,0.0f,0.0f,
@@ -120,79 +115,26 @@ static void display(void)
     };
 
     glPushMatrix();
-
-        /*
-        glBegin(GL_QUADS);
-            glColor3f(1.0f,0.0f,0.0f);
-            glVertex3f(0.0f,0.0f,0.0f);
-            glVertex3f(25.0f,0.0f,0.0f);
-            glVertex3f(30.0f,30.0f,0.0f);
-            glVertex3f(0.0f,25.0f,0.0f);
-        glEnd();
-        */
-
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, 0, vers);
         glEnableClientState(GL_COLOR_ARRAY);
         glColorPointer(3, GL_FLOAT, 0, cors);
         glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, indices);
-
-        //gui->update();
-        //gui->render();
-        //Simple::do_render();
     glPopMatrix();
-    glutSwapBuffers();
 }
 
-static void display1(void)
+static void display(void)
 {
-    const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-    const double a = t*90.0;
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
     glColor3d(1,0,0);
+    glTranslated(0, 0, -6);
 
-    glPushMatrix();
-        glTranslated(-2.4,1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutSolidSphere(1,slices,stacks);
-    glPopMatrix();
+    test_draw();
 
-    glPushMatrix();
-        glTranslated(0,1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutSolidCone(1,1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(2.4,1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutSolidTorus(0.2,0.8,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(-2.4,-1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutWireSphere(1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(0,-1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutWireCone(1,1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(2.4,-1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutWireTorus(0.2,0.8,slices,stacks);
-    glPopMatrix();
+    // TODO
+    gui->update();
+    gui->render();
 
     glutSwapBuffers();
 }
@@ -266,6 +208,8 @@ int main(int argc, char *argv[])
     glutTimerFunc(20, timer, 0);
 
     glutMainLoop();
+
+    Simple::Gui::destroy();
 
     return EXIT_SUCCESS;
 }
