@@ -42,7 +42,9 @@
 			<Add library="gdi32" />
 			<Add directory="G:/tools/CodeBlocks/MinGW/lib" />
 		</Linker>
-		<Unit filename="main.cpp" />
+		<Unit filename="src/gui.cpp" />
+		<Unit filename="src/gui.h" />
+		<Unit filename="src/main.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
