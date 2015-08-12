@@ -11,7 +11,7 @@ namespace Simple
     GLint g_gui_num = 0;
     GLfloat g_gui_vertexs[MAX_QUAD * 4 * 3];
     GLfloat g_gui_colors[MAX_QUAD * 4 * 3];
-    GLfloat g_gui_indices[MAX_QUAD * 4];
+    GLint g_gui_indices[MAX_QUAD * 4];
 
     std::vector<Window*> renderWins;
     Gui* glGui = NULL;
@@ -25,36 +25,51 @@ namespace Simple
 
         // 4 vertex
         // vertex 1
-        g_gui_vertexs[i * 12] = x;
-        g_gui_vertexs[i * 12 + 1] = y;
-        g_gui_vertexs[i * 12 + 2] = 0;
+        int ii = i * 12;
+        g_gui_vertexs[ii] = x;
+        g_gui_vertexs[ii + 1] = y;
+        g_gui_vertexs[ii + 2] = 0;
         // vertex 2
-        g_gui_vertexs[i * 12 + 3] = x + w;
-        g_gui_vertexs[i * 12 + 4] = y;
-        g_gui_vertexs[i * 12 + 5] = 0;
+        g_gui_vertexs[ii + 3] = x + w;
+        g_gui_vertexs[ii + 4] = y;
+        g_gui_vertexs[ii + 5] = 0;
         // vertex 3
-        g_gui_vertexs[i * 12 + 6] = x + w;
-        g_gui_vertexs[i * 12 + 7] = y + h;
-        g_gui_vertexs[i * 12 + 8] = 0;
+        g_gui_vertexs[ii + 6] = x + w;
+        g_gui_vertexs[ii + 7] = y + h;
+        g_gui_vertexs[ii + 8] = 0;
         // vertex 4
-        g_gui_vertexs[i * 12 + 9] = x;
-        g_gui_vertexs[i * 12 + 10] = y + h;
-        g_gui_vertexs[i * 12 + 11] = 0;
+        g_gui_vertexs[ii + 9] = x;
+        g_gui_vertexs[ii + 10] = y + h;
+        g_gui_vertexs[ii + 11] = 0;
     }
 
     inline void stre_indice(int i)
     {
-        g_gui_indices[i * 4] = i * 12;
-        g_gui_indices[i * 4 + 1] = i * 12 + 1;
-        g_gui_indices[i * 4 + 2] = i * 12 + 2;
-        g_gui_indices[i * 4 + 3] = i * 12 + 3;
+        int ii = i * 4;
+        g_gui_indices[ii] = ii;
+        g_gui_indices[ii + 1] = ii + 1;
+        g_gui_indices[ii + 2] = ii + 2;
+        g_gui_indices[ii + 3] = ii + 3;
     }
 
     inline void store_color(int i, float r, float g, float b)
     {
-        g_gui_colors[i * 3] = r;
-        g_gui_colors[i * 3 + 1] = g;
-        g_gui_colors[i * 3 + 2] = b;
+        int ii = i * 12;
+        g_gui_colors[ii] = r;
+        g_gui_colors[ii + 1] = g;
+        g_gui_colors[ii + 2] = b;
+
+        g_gui_colors[ii + 3] = r;
+        g_gui_colors[ii + 4] = g;
+        g_gui_colors[ii + 5] = b;
+
+        g_gui_colors[ii + 6] = r;
+        g_gui_colors[ii + 7] = g;
+        g_gui_colors[ii + 8] = b;
+
+        g_gui_colors[ii + 9] = r;
+        g_gui_colors[ii + 10] = g;
+        g_gui_colors[ii + 11] = b;
     }
 
     void gui_set_view(float w, float h)
@@ -74,7 +89,6 @@ namespace Simple
 
     void gui_update()
     {
-        gui_clear();
         std::vector<Window*>::iterator i = renderWins.begin();
             for (; i != renderWins.end(); ++i)
                 (*i)->draw();
@@ -143,6 +157,12 @@ namespace Simple
             }
             if (mMouseDownWin == win)
                 mMouseDownWin = NULL;
+        }
+        //===========================================================
+        //
+        int Window::mouseEvent(int button, int state, int x, int y)
+        {
+            return 0;
         }
         //===========================================================
         //
@@ -296,6 +316,11 @@ namespace Simple
             delete glGui;
             glGui = NULL;
         }
+
+        void Gui::setView(float width, float height)
+        {
+            gui_set_view(width, height);
+        }
         //===========================================================
         //
         void Gui::update()
@@ -381,11 +406,17 @@ namespace Simple
             }
             return false;
         }
+
+        int Gui::mouseEvent(int button, int state, int x, int y)
+        {
+            return 0;
+        }
         //===========================================================
         //
         void Gui::render()
         {
             gui_update();
             gui_render();
+            gui_clear();
         }
 }

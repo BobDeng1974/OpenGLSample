@@ -55,7 +55,7 @@ namespace Simple
     class Color
     {
     public:
-        Color(): r(255), g(255), b(255) {}
+        Color(): r(1.0f), g(1.0f), b(1.0f) {}
         Color(float r, float g, float b): r(r), g(g), b(b){}
         float r, g, b;
     };
@@ -84,6 +84,8 @@ namespace Simple
         void removeChild(Window *win);
 
         virtual void update(float dt) {}
+        virtual int mouseEvent(int button, int state, int x, int y);
+
         virtual int mouseDown(float x, float y);
         virtual void mouseMove(float x, float y);
         virtual void mosueUp(float x, float y);
@@ -152,12 +154,16 @@ namespace Simple
         static Gui* create();
         static void destroy();
 
+        void setView(float width, float height);
+
         void update();
         void render();
 
         Button* addButton(const std::string& name, float x, float y, float w, float h);
         GLLabel* addLabel(const std::string& name, const std::string& str);
         Slider* addSlider(const std::string& name, float x, float y, float w, float h);
+
+        int mouseEvent(int button, int state, int x, int y);
 
         void removeWindow(Window *win);
         bool hasWindow(const std::string& name);
