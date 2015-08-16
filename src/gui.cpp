@@ -1,5 +1,6 @@
 #include "gui.h"
 #include "assert.h"
+#include <stdio.h>
 
 
 namespace Simple
@@ -158,20 +159,40 @@ namespace Simple
             if (mMouseDownWin == win)
                 mMouseDownWin = NULL;
         }
+
+        //===========================================================
+        //
+        bool Window::hitTest(float x, float y)
+        {
+            if (x < mPosition.x || x > mPosition.x + mSize.w)
+                return false;
+            if (y < mPosition.y || y > mPosition.y + mSize.h)
+                return false;
+
+            printf("hitTest true %f, %f\n", x, y);
+            return true;
+        }
+
         //===========================================================
         //
         int Window::mouseEvent(int button, int state, int x, int y)
         {
+            if (button == GLUT_LEFT_BUTTON)
+            {
+                if (state == GLUT_DOWN)
+                    mouseDown(x, y);
+                else if (state == GLUT_UP)
+                    mouseUp(x, y);
+            }
             return 0;
         }
         //===========================================================
         //
         int Window::mouseDown(float x, float y)
         {
-            if (x < mPosition.x || x > mPosition.x + mSize.w)
+            if (!hitTest(x, y))
                 return 0;
-            if (y < mPosition.y || y > mPosition.y + mSize.h)
-                return 0;
+
             std::vector<Window*>::iterator i = mChildren.begin();
             for (; i != mChildren.end(); ++i)
             {
@@ -195,10 +216,10 @@ namespace Simple
         }
         //===========================================================
         //
-        void Window::mosueUp(float x, float y)
+        void Window::mouseUp(float x, float y)
         {
             if (mMouseDownWin)
-                mMouseDownWin->mosueUp(x, y);
+                mMouseDownWin->mouseUp(x, y);
         }
         //===========================================================
         //
@@ -293,7 +314,7 @@ namespace Simple
         }
         //===========================================================
         //
-        void Slider::mosueUp(float x, float y)
+        void Slider::mouseUp(float x, float y)
         {
 
         }
@@ -409,6 +430,12 @@ namespace Simple
 
         int Gui::mouseEvent(int button, int state, int x, int y)
         {
+            std::vector<Window*>::iterator i = renderWins.begin();
+            for (; i != renderWins.end(); ++i)
+            {
+                if ((*i)->mouseEvent(button, state, x, y))
+                    break;
+            }
             return 0;
         }
         //===========================================================

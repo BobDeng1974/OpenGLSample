@@ -145,13 +145,10 @@ static void timer(int dt)
 
 static void mouse(int button, int state, int x, int y)
 {
-    if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON)
-    {
-        GLdouble wx, wy, wz;
-        screen2world(x, y, wx, wy, wz);
-        gui->mouseEvent(button,state, wx, wy);
-        printf("%f, %f, %f\n", wx, wy, wz);
-    }
+    GLdouble wx, wy, wz;
+    screen2world(x, y, wx, wy, wz);
+    gui->mouseEvent(button, state, wx, wy);
+    printf("%d,%d ==> %f, %f, %f\n", x, y, wx, wy, wz);
 }
 
 static void key(unsigned char key, int x, int y)

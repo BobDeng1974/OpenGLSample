@@ -4,6 +4,8 @@
 #include <GL/glut.h>
 #include <vector>
 #include <string>
+#include <assert.h>
+
 using namespace std;
 
 namespace Simple
@@ -17,25 +19,25 @@ namespace Simple
     void gui_clear();
 
     // 最基础的UI,这里不使用纹理来进行直接使用颜色
-    class Vector2d
+    class Point
     {
     public:
         float x, y, z;
-        Vector2d():x(0), y(0), z(0){}
-        Vector2d(float x, float y, float z):x(x), y(y), z(z){}
-        Vector2d operator=(const Vector2d& r)
+        Point():x(0), y(0), z(0){}
+        Point(float x, float y, float z):x(x), y(y), z(z){}
+        Point operator=(const Point& r)
         {
-            return Vector2d(r.x, r.y, r.z);
+            return Point(r.x, r.y, r.z);
         }
-        Vector2d operator+(const Vector2d& r)
+        Point operator+(const Point& r)
         {
-            return Vector2d(x + r.x, y + r.y, z + r.z);
+            return Point(x + r.x, y + r.y, z + r.z);
         }
-        Vector2d operator-(const Vector2d& r)
+        Point operator-(const Point& r)
         {
-            return Vector2d(x - r.x, y - r.y, z - r.z);
+            return Point(x - r.x, y - r.y, z - r.z);
         }
-        Vector2d& operator+=(const Vector2d& r)
+        Point& operator+=(const Point& r)
         {
             x += r.x;
             y += r.y;
@@ -73,29 +75,31 @@ namespace Simple
         void setName(const std::string& name) { mName = name; }
         const std::string getName(void) { return mName; }
 
-        void setPosition(const Vector2d &v) { mPosition = v; }
+        void setPosition(const Point &v) { mPosition = v; }
         void setSize(const Size &v) { mSize = v; }
         void setColor(const Color &c) { mColor = c; }
         void addChild(Window *win) { mChildren.push_back(win); }
 
-        const Vector2d& getPositoin(void)   {return mPosition; }
+        const Point& getPositoin(void)   {return mPosition; }
         const Size& getSize(void)       { return mSize; }
         const Color& getColor(void) { return mColor; }
         void removeChild(Window *win);
+
+        bool hitTest(float x, float y);
 
         virtual void update(float dt) {}
         virtual int mouseEvent(int button, int state, int x, int y);
 
         virtual int mouseDown(float x, float y);
         virtual void mouseMove(float x, float y);
-        virtual void mosueUp(float x, float y);
+        virtual void mouseUp(float x, float y);
 
         virtual void draw(float x = 0, float y = 0);
     protected:
 
         Color mColor;
         Size mSize;
-        Vector2d mPosition;
+        Point mPosition;
         std::string mName;
         std::vector<Window*> mChildren;
 
@@ -112,7 +116,7 @@ namespace Simple
 
         virtual int mouseDown(float x, float y);
         virtual void mouseMove(float x, float y) {}
-        virtual void mosueUp(float x, float y) {}
+        virtual void mouseUp(float x, float y) {}
 
     protected:
         Function0 mCallBack;
@@ -137,15 +141,18 @@ namespace Simple
         void setValue(float v) { mValue = v; }
         float getValue(void) { return mValue; }
 
+        Window* getBar() { return mBar; }
+
         void setValueChangeHandle(Function1 func) { mValueChangeHandle = func; }
         virtual int mouseDown(float x, float y);
         virtual void mouseMove(float x, float y);
-        virtual void mosueUp(float x, float y);
+        virtual void mouseUp(float x, float y);
     protected:
         float mValue;
         Function1 mValueChangeHandle;
         Window* mBar;
-        Vector2d mBegin;
+        Point mBegin;
+        Point mBarBegin;
     };
 
     class Gui
