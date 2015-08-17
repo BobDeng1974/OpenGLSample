@@ -5,6 +5,9 @@
 #include <stdio.h>
 
 Simple::Gui* gui = NULL;
+int g_width = 0;
+int g_height = 0;
+float g_wh = 0.0f;
 
 // 设置灯光的颜色
 const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -35,15 +38,23 @@ int screen2world(int x, int y, GLdouble &wx, GLdouble &wy, GLdouble &wz)
     GLdouble projection[16];
 
     GLfloat winx, winy, winz;
+    GLdouble mx, my, mz;
+    glTranslated(0, 0, 2.1);
 
+    glPushMatrix();
     glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
     glGetDoublev(GL_PROJECTION_MATRIX, projection);
     glGetIntegerv(GL_VIEWPORT, viewport);
+    glPopMatrix();
 
     winx = x;
     winy = (float)viewport[3] - (float)y;
-    glReadPixels(x, (int)winy, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winz);
-    gluUnProject(winx, winy, winz, modelview, projection, viewport, &wx, &wy, &wz);
+    glReadPixels(winx, (int)winy, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winz);
+    gluUnProject(winx, winy, winz, modelview, projection, viewport, &mx, &my, &mz);
+    wx = mx;
+    wy = my;
+    wz = mz;
+    printf("==>x:%f,y:%f,z:%f\n", mx, my, mz);
     return 1;
 }
 
@@ -80,7 +91,12 @@ static void init()
 
 static void resize(int width, int height)
 {
+    g_width = width;
+    g_height = height;
+
     const float ar = (float) width / (float) height;
+
+    g_wh = ar;
 
     printf("%d,%d\n", width, height);
     gui->setView(width, height);
@@ -91,7 +107,7 @@ static void resize(int width, int height)
     glFrustum(-ar, ar, -1.0, 1.0, 2.0, 100.0);
 
     glMatrixMode(GL_MODELVIEW);     // 模型变换
-    glLoadIdentity() ;
+    glLoadIdentity();
 }
 
 void test_draw()
@@ -126,13 +142,29 @@ static void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     glColor3d(1,0,0);
-    glTranslated(0, 0, -2.1);
 
-    //test_draw();
+    // 2D
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    float hw = g_width / 2;
+    float hh = g_height / 2;
 
-    // TODO
+    glOrtho(-hw * g_wh,hw * g_wh,-hh,hh,-1,1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
     gui->update();
     gui->render();
+
+    // 3d
+    glMatrixMode(GL_PROJECTION);    // 透视变换
+    glLoadIdentity();
+    glFrustum(-g_wh, g_wh, -1.0, 1.0, 2.0, 100.0);
+    glMatrixMode(GL_MODELVIEW);     // 模型变换
+    glLoadIdentity();
+
+
+
 
     glutSwapBuffers();
 }

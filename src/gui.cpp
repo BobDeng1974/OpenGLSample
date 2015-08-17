@@ -19,11 +19,12 @@ namespace Simple
 
     inline void store_rect(int i, float x, float y, float w, float h)
     {
+        /*
         x /= g_gui_width;
         y /= g_gui_height;
         w /= g_gui_width;
         h /= g_gui_height;
-
+        */
         // 4 vertex
         // vertex 1
         int ii = i * 12;
