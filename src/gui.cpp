@@ -7,6 +7,9 @@ namespace Simple
 {
     GLint g_gui_width = 1;
     GLint g_gui_height = 1;
+    GLfloat g_gui_ar = 1;
+    GLfloat g_gui_half_width = 1;
+    GLfloat g_gui_half_height = 1;
 
     const unsigned int MAX_QUAD = 1000;
     GLint g_gui_num = 0;
@@ -17,14 +20,18 @@ namespace Simple
     std::vector<Window*> renderWins;
     Gui* glGui = NULL;
 
+    inline int check_to_x(int x)
+    {
+        return x - g_gui_half_width;
+    }
+
+    inline int check_to_y(int y)
+    {
+        return g_gui_half_height - y;
+    }
+
     inline void store_rect(int i, float x, float y, float w, float h)
     {
-        /*
-        x /= g_gui_width;
-        y /= g_gui_height;
-        w /= g_gui_width;
-        h /= g_gui_height;
-        */
         // 4 vertex
         // vertex 1
         int ii = i * 12;
@@ -78,6 +85,9 @@ namespace Simple
     {
         g_gui_width = w;
         g_gui_height = h;
+        g_gui_ar = (float) w / (float) h;
+        g_gui_half_width = w / 2.0;
+        g_gui_half_height = h / 2.0;
     }
 
     void gui_add_rect(float x, float y, float w, float h, float r, float g, float b)
@@ -96,6 +106,43 @@ namespace Simple
                 (*i)->draw();
     }
 
+    void gui_begin()
+    {
+        //save current attributes
+		glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+		glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+		glPolygonMode(GL_FRONT, GL_FILL);
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glOrtho(-g_gui_width * g_gui_ar,g_gui_width * g_gui_ar,-g_gui_half_height,g_gui_half_height,-1,1);
+
+		//glOrtho(-1, 1, -1, 1, -1, 1);
+
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glDisable(GL_LIGHTING);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_FOG);
+		glDisable(GL_TEXTURE_GEN_S);
+		glDisable(GL_TEXTURE_GEN_T);
+		glDisable(GL_TEXTURE_GEN_R);
+
+		//glFrontFace(GL_CW);
+		//glCullFace(GL_BACK);
+		//glEnable(GL_CULL_FACE);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glEnable(GL_TEXTURE_2D);
+    }
+
     void gui_render()
     {
         if (g_gui_num > 0)
@@ -111,6 +158,18 @@ namespace Simple
             glDisableClientState(GL_VERTEX_ARRAY);
             glDisableClientState(GL_COLOR_ARRAY);
         }
+    }
+
+    void gui_end()
+    {
+        glPopMatrix();
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+
+		//restore former attributes
+		glPopAttrib();
+		glPopClientAttrib();
     }
 
     void gui_clear()
@@ -431,10 +490,14 @@ namespace Simple
 
         int Gui::mouseEvent(int button, int state, int x, int y)
         {
+            int lx = check_to_x(x);
+            int ly = check_to_y(y);
+
+            printf("(x,y)==>(%d,%d)\n", lx, ly);
             std::vector<Window*>::iterator i = renderWins.begin();
             for (; i != renderWins.end(); ++i)
             {
-                if ((*i)->mouseEvent(button, state, x, y))
+                if ((*i)->mouseEvent(button, state, lx, ly))
                     break;
             }
             return 0;
@@ -444,7 +507,9 @@ namespace Simple
         void Gui::render()
         {
             gui_update();
+            gui_begin();
             gui_render();
+            gui_end();
             gui_clear();
         }
 }

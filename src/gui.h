@@ -15,7 +15,10 @@ namespace Simple
     void gui_set_view(float w, float h);
     void gui_add_rect(float x, float y, float w, float h, float r = 1.0f, float g = 1.0f, float b = 1.0f);
     void gui_update();
+
+    void gui_begin();
     void gui_render();
+    void gui_end();
     void gui_clear();
 
     // 最基础的UI,这里不使用纹理来进行直接使用颜色
