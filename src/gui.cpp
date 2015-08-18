@@ -117,7 +117,8 @@ namespace Simple
 		glPushMatrix();
 		glLoadIdentity();
 
-		glOrtho(-g_gui_width * g_gui_ar,g_gui_width * g_gui_ar, -g_gui_half_height, g_gui_half_height, -1, 1);
+		//glOrtho(-g_gui_half_width * g_gui_ar, g_gui_half_width * g_gui_ar, -g_gui_half_height, g_gui_half_height, -1, 1);
+		glOrtho(-g_gui_half_width, g_gui_half_width, -g_gui_half_height, g_gui_half_height, -1, 1);
 
 		//glOrtho(-1, 1, -1, 1, -1, 1);
 
