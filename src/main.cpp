@@ -88,25 +88,25 @@ int LoadGLTextures()
 //
 static void init()
 {
-    //LoadGLTextures();
+    LoadGLTextures();
     glClearColor(0,0,0,1);      // 清理屏幕为黑色
     glEnable(GL_CULL_FACE);     // 启用面剔除
     glCullFace(GL_BACK);
 
     glEnable(GL_DEPTH_TEST);    // 启用深度测试
-    /*
+
     glEnable(GL_LIGHT0);        // 启用灯光0
     glEnable(GL_NORMALIZE);     // 启用法线
-    glEnable(GL_COLOR_MATERIAL);    // 启用材质模式
+    glEnable(GL_COLOR_MATERIAL);// 启用材质模式
     glEnable(GL_LIGHTING);      // 打开灯光
-    */
+
     //
     glEnable(GL_TEXTURE_2D);
     //glShadeModel(GL_SMOOTH);
     //glClearDepth(1.0f);
     //glDepthFunc(GL_LEQUAL);
     //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    /*
+
     // 设置灯光
     glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);  // 设置环境光颜色
     glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);  // 设置漫反射的颜色
@@ -116,9 +116,9 @@ static void init()
     // 设置材质
     glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);   // 设置环境光颜色
     glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);   // 设置漫反射的颜色
-    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);   // 设置镜面反射的颜色
-    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);                   // 镜面指数 该值越小，表示材质越粗糙，点光源发射的光线照射到上面，也可以产生较大的亮点
-    */
+    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);  // 设置镜面反射的颜色
+    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);// 镜面指数 该值越小，表示材质越粗糙，点光源发射的光线照射到上面，也可以产生较大的亮点
+
 }
 
 void test_draw()
@@ -171,28 +171,14 @@ static void display()
     glLoadIdentity();
 
     glTranslatef(0.0f ,0.0f, -3.0f);
-    test_draw();
+    //test_draw();
     r += 0.05f;
     glPushMatrix();
-        //glRotatef(r, 1.0f, 0.0f, 0.0f);
-        //glRotatef(r, 0.0f, 1.0f, 0.0f);
+        glRotatef(r, 1.0f, 0.0f, 0.0f);
+        glRotatef(r, 0.0f, 1.0f, 0.0f);
 
-        //glBindTexture(GL_TEXTURE_2D, texture.texID);
-        glColor3d(1,1,1);
-        glBegin(GL_QUADS);										// Draw Our Quad
-			//glTexCoord2f(0.0f, 1.0f);
-			glVertex3f(-1.0f,  1.0f, 0.0f);
-			//glTexCoord2f(1.0f, 1.0f);
-			glVertex3f( 1.0f,  1.0f, 0.0f);
-			//glTexCoord2f(1.0f, 0.0f);
-			glVertex3f( 1.0f, -1.0f, 0.0f);
-			//glTexCoord2f(0.0f, 0.0f);
-			glVertex3f(-1.0f, -1.0f, 0.0f);
-		glEnd();
-
-
-/*
-        glEnableClientState(GL_NORMAL_ARRAY);
+        glBindTexture(GL_TEXTURE_2D, texture.texID);
+        glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, 0, vers);
 
         glEnableClientState(GL_NORMAL_ARRAY);
@@ -204,8 +190,8 @@ static void display()
         glEnableClientState(GL_COLOR_ARRAY);
         glColorPointer(3, GL_FLOAT, 0, cors);
 
-        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, indices);
-*/
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, indices);
+
     glPopMatrix();
     glutSwapBuffers();      // 交换缓冲区
 }
