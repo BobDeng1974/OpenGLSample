@@ -45,6 +45,8 @@
 		<Unit filename="src/gui.cpp" />
 		<Unit filename="src/gui.h" />
 		<Unit filename="src/main.cpp" />
+		<Unit filename="src/texture.cpp" />
+		<Unit filename="src/texture.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
