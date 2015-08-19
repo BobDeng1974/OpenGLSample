@@ -3,6 +3,7 @@
 
 #include <GL/glut.h>
 
+
 // texture data
 struct Texture
 {
@@ -17,5 +18,6 @@ struct Texture
 
 bool LoadTGA(Texture* , const char* );
 
+bool ReadFileData(const char* filename, char* data, size_t &sz);
 
 #endif // __TEXTURE_H__

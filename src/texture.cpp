@@ -265,3 +265,18 @@ bool LoadCompressedTGA(Texture * texture, FILE * fn)
 	while(currentpixel < pixelcount);
 	return true;
 }
+
+bool ReadFileData(const char* filename, char* data, size_t &sz)
+{
+    bool ret = false;
+    FILE *fn = fopen(filename, "rb");
+    if (fn == NULL)
+    {
+        out_error(" cant open file");
+        return ret;
+    }
+    sz = fread(data, 1024, 1, fn);
+    fclose(fn);
+    return ret;
+}
+

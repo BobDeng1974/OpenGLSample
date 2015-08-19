@@ -1,6 +1,11 @@
+#include <GL/glew.h>
 #include <GL/glut.h>
 
 #include "texture.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // ¶¥µã×ø±ê
 const GLfloat vers[] = {
@@ -84,6 +89,69 @@ int LoadGLTextures()
     }
     return Status;
 }
+
+GLchar* ReadShaderData(const char* filename, GLsizei &sz)
+{
+    FILE *fn = fopen(filename, "rb");
+    if (fn == NULL)
+    {
+        printf(" cant open file \n");
+        return NULL;
+    }
+    fseek(fn, 0L, SEEK_END);
+    sz = ftell(fn);
+    fseek(fn, 0L, SEEK_SET);
+    GLchar* data = (GLchar*)malloc(sz);
+    sz = fread((void*)data, 1, sz, fn);
+    fclose(fn);
+    return data;
+}
+
+GLuint  buildShader(const char* filename, GLenum type)
+{
+    GLsizei sz = 0;
+    GLint succ;
+    GLchar* vsSource = ReadShaderData(filename, sz);
+    GLuint  vs = glCreateShader(type);
+    glShaderSource(vs, 1, &vsSource, &sz);
+    glCompileShader(vs);
+    glGetShaderiv(vs, GL_COMPILE_STATUS, &succ);
+    if (succ == GL_FALSE)
+    {
+        GLchar err[256] = {0};
+        GLsizei err_sz, len;
+        glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &err_sz);
+        glGetShaderInfoLog(vs, err_sz, &len, err);
+        printf("%s\n", err);
+    }
+
+    return vs;
+}
+
+GLuint buildProgram(const char*vsfn, const char* frfn)
+{
+    GLint linked;
+    GLuint program = glCreateProgram();
+    GLuint vsshader = buildShader(vsfn, GL_VERTEX_SHADER);
+    GLuint frshader = buildShader(frfn, GL_FRAGMENT_SHADER);
+    glAttachShader(program, vsshader);
+    glAttachShader(program, frshader);
+    glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE)
+    {
+        GLchar err[256] = {0};
+        GLsizei err_sz, len;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &err_sz);
+        glGetProgramInfoLog(program, err_sz, &len, err);
+        printf("%s\n", err);
+    }
+    glUseProgram(program);
+    return program;
+}
+
+
+
 //----------------------------------------------------------------------------
 //
 static void init()
