@@ -156,6 +156,7 @@ GLuint buildProgram(const char*vsfn, const char* frfn)
 //
 static void init()
 {
+    buildProgram("Data/shader.vert", "Data/shader.frag");
     LoadGLTextures();
     glClearColor(0,0,0,1);      // 清理屏幕为黑色
     glEnable(GL_CULL_FACE);     // 启用面剔除
