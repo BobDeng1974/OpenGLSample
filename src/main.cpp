@@ -298,7 +298,13 @@ int main(int argc, char *argv[])
         // render
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glTranslatef(0.0f ,0.0f, -3.0f);
-        //test_draw();
+
+        test_draw();
+
+        glEnable(GL_BLEND);
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER ,0.9);//0.5可以换成任何在0~1之间的数
+
         float r  = 50 * (float)glfwGetTime();
         glPushMatrix();
             glRotatef(r, 1.0f, 0.0f, 0.0f);
