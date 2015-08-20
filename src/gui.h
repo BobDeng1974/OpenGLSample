@@ -1,7 +1,9 @@
-#ifndef GUI_H
-#define GUI_H
+#ifndef __GUI_H__
+#define __GUI_H__
 
-#include <GL/glut.h>
+#include <GL/gl.h>
+#include <GLFW/glfw3.h>
+
 #include <vector>
 #include <string>
 #include <assert.h>
@@ -182,4 +184,4 @@ namespace Simple
 }
 
 
-#endif // GUI_H
+#endif // __GUI_H__

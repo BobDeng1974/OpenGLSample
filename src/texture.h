@@ -1,7 +1,8 @@
 #ifndef __TEXTURE_H__
 #define __TEXTURE_H__
 
-#include <GL/glut.h>
+#include <GL/gl.h>
+#include <string.h>
 
 
 // texture data

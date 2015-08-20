@@ -238,11 +238,11 @@ namespace Simple
         //
         int Window::mouseEvent(int button, int state, int x, int y)
         {
-            if (button == GLUT_LEFT_BUTTON)
+            if (button == GLFW_MOUSE_BUTTON_LEFT)
             {
-                if (state == GLUT_DOWN)
+                if (state == GLFW_PRESS)
                     mouseDown(x, y);
-                else if (state == GLUT_UP)
+                else if (state == GLFW_RELEASE)
                     mouseUp(x, y);
             }
             return 0;
@@ -330,8 +330,8 @@ namespace Simple
             glTranslatef(x, y, 0);
             glScalef(0.1, 0.1, 0.1);
             glColor3f(mColor.r, mColor.g, mColor.b);
-            for (int i = 0; i < sz; ++i)
-                glutStrokeCharacter(GLUT_STROKE_ROMAN, dt[i]);
+            //for (int i = 0; i < sz; ++i)
+                //glutStrokeCharacter(GLUT_STROKE_ROMAN, dt[i]);
             glPopMatrix();
         }
         //===========================================================
