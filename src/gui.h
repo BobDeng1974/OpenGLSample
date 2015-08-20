@@ -14,35 +14,28 @@ namespace Simple
 {
 
     // base function
-    void gui_set_view(float w, float h);
-    void gui_add_rect(float x, float y, float w, float h, float r = 1.0f, float g = 1.0f, float b = 1.0f);
-    void gui_update();
+    void rdSetView(float w, float h);
+    void rdAddRectangle(float x, float y, float w, float h, float r = 1.0f, float g = 1.0f, float b = 1.0f);
+    void rdUpdate();
 
-    void gui_begin();
-    void gui_render();
-    void gui_end();
-    void gui_clear();
+    void rdBegin();
+    void rdRender();
+    void rdEnd();
+
+    void rdFrameQueue();
+
 
     // 最基础的UI,这里不使用纹理来进行直接使用颜色
-    class Point
+    class rdPoint
     {
     public:
         float x, y, z;
-        Point():x(0), y(0), z(0){}
-        Point(float x, float y, float z):x(x), y(y), z(z){}
-        Point operator=(const Point& r)
-        {
-            return Point(r.x, r.y, r.z);
-        }
-        Point operator+(const Point& r)
-        {
-            return Point(x + r.x, y + r.y, z + r.z);
-        }
-        Point operator-(const Point& r)
-        {
-            return Point(x - r.x, y - r.y, z - r.z);
-        }
-        Point& operator+=(const Point& r)
+        explicit rdPoint():x(0), y(0), z(0){}
+        rdPoint(float x, float y, float z):x(x), y(y), z(z){}
+        rdPoint operator=(const rdPoint& r) { return rdPoint(r.x, r.y, r.z); }
+        rdPoint operator+(const rdPoint& r) { return rdPoint(x + r.x, y + r.y, z + r.z); }
+        rdPoint operator-(const rdPoint& r) { return rdPoint(x - r.x, y - r.y, z - r.z); }
+        rdPoint& operator+=(const rdPoint& r)
         {
             x += r.x;
             y += r.y;
@@ -51,19 +44,19 @@ namespace Simple
         }
     };
 
-    class Size
+    class rdSize
     {
     public:
-        Size():w(0),h(0){}
-        Size(float w, float h): w(w), h(h) {}
+        rdSize():w(0),h(0){}
+        rdSize(float w, float h): w(w), h(h) {}
         float w, h;
     };
 
-    class Color
+    class rdColor
     {
     public:
-        Color(): r(1.0f), g(1.0f), b(1.0f) {}
-        Color(float r, float g, float b): r(r), g(g), b(b){}
+        explicit rdColor(): r(1.0f), g(1.0f), b(1.0f) {}
+        rdColor(float r, float g, float b): r(r), g(g), b(b){}
         float r, g, b;
     };
 
@@ -73,21 +66,21 @@ namespace Simple
     class Window
     {
     public:
-        Window();
+        explicit Window();
         Window(float x = 0, float y = 0, float w = 1, float h = 1);
         virtual ~Window();
 
         void setName(const std::string& name) { mName = name; }
         const std::string getName(void) { return mName; }
 
-        void setPosition(const Point &v) { mPosition = v; }
-        void setSize(const Size &v) { mSize = v; }
-        void setColor(const Color &c) { mColor = c; }
+        void setPosition(const rdPoint &v) { mPosition = v; }
+        void setrdSize(const rdSize &v) { mrdSize = v; }
+        void setColor(const rdColor &c) { mColor = c; }
         void addChild(Window *win) { mChildren.push_back(win); }
 
-        const Point& getPositoin(void)   {return mPosition; }
-        const Size& getSize(void)       { return mSize; }
-        const Color& getColor(void) { return mColor; }
+        const rdPoint& getPositoin(void)   {return mPosition; }
+        const rdSize& getSize(void)       { return mrdSize; }
+        const rdColor& getColor(void) { return mColor; }
         void removeChild(Window *win);
 
         bool hitTest(float x, float y);
@@ -102,9 +95,9 @@ namespace Simple
         virtual void draw(float x = 0, float y = 0);
     protected:
 
-        Color mColor;
-        Size mSize;
-        Point mPosition;
+        rdColor mColor;
+        rdSize mrdSize;
+        rdPoint mPosition;
         std::string mName;
         std::vector<Window*> mChildren;
 
@@ -114,7 +107,7 @@ namespace Simple
     class Button : public Window
     {
     public:
-        Button();
+        explicit Button();
         Button(float x, float y, float w, float h);
 
         void setMouseDownHandle(Function0 func) { mCallBack = func; }
@@ -127,11 +120,11 @@ namespace Simple
         Function0 mCallBack;
     };
 
-    class GLLabel : public Window
+    class Label : public Window
     {
     public:
-        GLLabel();
-        GLLabel(const std::string& str);
+         explicit Label();
+        Label(const std::string& str);
         virtual void draw(float x = 0, float y = 0);
     protected:
         std::string mString;
@@ -140,7 +133,7 @@ namespace Simple
     class Slider : public Window
     {
     public:
-        Slider();
+         explicit Slider();
         Slider(float x, float y, float w, float h);
 
         void setValue(float v) { mValue = v; }
@@ -156,30 +149,8 @@ namespace Simple
         float mValue;
         Function1 mValueChangeHandle;
         Window* mBar;
-        Point mBegin;
-        Point mBarBegin;
-    };
-
-    class Gui
-    {
-    public:
-        static Gui* create();
-        static void destroy();
-
-        void setView(float width, float height);
-
-        void update();
-        void render();
-
-        Button* addButton(const std::string& name, float x, float y, float w, float h);
-        GLLabel* addLabel(const std::string& name, const std::string& str);
-        Slider* addSlider(const std::string& name, float x, float y, float w, float h);
-
-        int mouseEvent(int button, int state, int x, int y);
-
-        void removeWindow(Window *win);
-        bool hasWindow(const std::string& name);
-        void removeWindowByName(const std::string& name);
+        rdPoint mBegin;
+        rdPoint mBarBegin;
     };
 }
 

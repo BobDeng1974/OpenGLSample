@@ -214,7 +214,10 @@ static void init()
 
     //
     glEnable(GL_TEXTURE_2D);
-    //glShadeModel(GL_SMOOTH);
+    glEnable(GL_BLEND);
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER ,0.9);//0.5可以换成任何在0~1之间的数
+    glShadeModel(GL_SMOOTH);
     //glClearDepth(1.0f);
     //glDepthFunc(GL_LEQUAL);
     //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -300,10 +303,6 @@ int main(int argc, char *argv[])
         glTranslatef(0.0f ,0.0f, -3.0f);
 
         test_draw();
-
-        glEnable(GL_BLEND);
-        glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GREATER ,0.9);//0.5可以换成任何在0~1之间的数
 
         float r  = 50 * (float)glfwGetTime();
         glPushMatrix();
