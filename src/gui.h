@@ -15,7 +15,7 @@ namespace Simple
 
     // base function
     void rdSetView(float w, float h);
-    void rdAddRectangle(float x, float y, float w, float h, float r = 1.0f, float g = 1.0f, float b = 1.0f);
+    void rdAddRectangle(float x, float y, float w, float h, float u0, float v0, float u1, float v1, float r = 1.0f, float g = 1.0f, float b = 1.0f);
     void rdUpdate();
 
     void rdBegin();
@@ -60,6 +60,14 @@ namespace Simple
         float r, g, b;
     };
 
+    class rdRect
+    {
+    public:
+        explicit rdRect(): x(0.0f), y(0.0f), w(1.0f), h(1.0f){}
+        rdRect(float x, float y, float w, float h):x(x), y(y), w(w), h(h){}
+        float x, y, w, h;
+    };
+
     typedef void (*Function0)();
     typedef void (*Function1)(float value);
 
@@ -73,6 +81,10 @@ namespace Simple
         void setName(const std::string& name) { mName = name; }
         const std::string getName(void) { return mName; }
 
+        void setUVS(float u0, float v0, float w, float h)
+        {
+            mRect.x = u0; mRect.y = v0; mRect.w = w; mRect.h = h;
+        }
         void setPosition(const rdPoint &v) { mPosition = v; }
         void setrdSize(const rdSize &v) { mrdSize = v; }
         void setColor(const rdColor &c) { mColor = c; }
@@ -100,6 +112,8 @@ namespace Simple
         rdPoint mPosition;
         std::string mName;
         std::vector<Window*> mChildren;
+
+        rdRect mRect;
 
         Window* mMouseDownWin;
     };

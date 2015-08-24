@@ -11,9 +11,10 @@ namespace Simple
     GLfloat g_gui_half_width = 1;
     GLfloat g_gui_half_height = 1;
 
-    const unsigned int MAX_QUAD = 1000;
+    const int MAX_QUAD = 1000;
     GLint g_gui_num = 0;
     GLfloat g_gui_vertexs[MAX_QUAD * 4 * 3];
+    GLfloat g_gui_uvs[MAX_QUAD * 4 * 2];
     GLfloat g_gui_colors[MAX_QUAD * 4 * 3];
     GLint g_gui_indices[MAX_QUAD * 4];
 
@@ -59,7 +60,25 @@ namespace Simple
 
     //===========================================================
     //
-    inline void stre_indice(int i)
+    inline void store_uv(int i, float u0, float v0, float u1, float v1)
+    {
+        int ii = i * 8;
+        g_gui_uvs[ii] = u0;
+        g_gui_uvs[ii + 1] = v0;
+
+        g_gui_uvs[ii + 2] = u1;
+        g_gui_uvs[ii + 3] = v0;
+
+        g_gui_uvs[ii + 4] = u1;
+        g_gui_uvs[ii + 5] = v1;
+
+        g_gui_uvs[ii + 6] = u0;
+        g_gui_uvs[ii + 7] = v1;
+    }
+
+    //===========================================================
+    //
+    inline void store_indice(int i)
     {
         int ii = i * 4;
         g_gui_indices[ii] = ii;
@@ -103,11 +122,12 @@ namespace Simple
 
     //===========================================================
     //
-    void rdAddRectangle(float x, float y, float w, float h, float r, float g, float b)
+    void rdAddRectangle(float x, float y, float w, float h, float u0, float v0, float u1, float v1, float r, float g, float b)
     {
         assert(g_gui_num < MAX_QUAD);
         store_rect(g_gui_num, x, y, w, h);
-        stre_indice(g_gui_num);
+        store_uv(g_gui_num, u0, v0, u1, v1);
+        store_indice(g_gui_num);
         store_color(g_gui_num, r, g, b);
         g_gui_num++;
     }
@@ -169,6 +189,9 @@ namespace Simple
         {
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, 0, g_gui_vertexs);
+
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexCoordPointer(2, GL_FLAT, 0, g_gui_uvs);
 
             glEnableClientState(GL_COLOR_ARRAY);
             glColorPointer(3, GL_FLOAT, 0, g_gui_colors);
@@ -313,7 +336,11 @@ namespace Simple
     //
     void Window::draw(float x, float y)
     {
-        rdAddRectangle(mPosition.x + x, mPosition.y + y, mrdSize.w, mrdSize.h, mColor.r, mColor.g, mColor.b);
+        rdRect &r = mRect;
+        rdPoint &p = mPosition;
+        rdSize &s = mrdSize;
+        rdColor &c = mColor;
+        rdAddRectangle(p.x + x, p.y + y, s.w, s.h, r.x, r.y, r.x + r.w, r.y + r.h, c.r, c.g, c.b);
         std::vector<Window*>::iterator i = mChildren.begin();
         for (; i != mChildren.end(); ++i)
             (*i)->draw(mPosition.x + x, mPosition.y + y);
