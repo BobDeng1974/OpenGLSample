@@ -271,7 +271,7 @@ static void cursorpos_callback(GLFWwindow *window, double x, double y)
 
 //----------------------------------------------------------------------------
 //
-int main(int argc, char *argv[])
+int main1(int argc, char *argv[])
 {
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
@@ -333,4 +333,17 @@ int main(int argc, char *argv[])
     glfwDestroyWindow(window);
     glfwTerminate();
     return EXIT_SUCCESS;
+}
+
+#include "ms3dloader.h"
+
+int main(int argc, char *argv[])
+{
+
+    Ms3d_Space::ms3d_file_t file;
+    Ms3d_Space::load_ms3d_file(&file, "Data/tin_open_lay.ms3d");
+    Ms3d_Space::dump_ms3d_file(&file, "Data/tin_open_lay.log");
+    // print data
+
+
 }
