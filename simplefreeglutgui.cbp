@@ -41,6 +41,8 @@
 		<Unit filename="src/gui.cpp" />
 		<Unit filename="src/gui.h" />
 		<Unit filename="src/main.cpp" />
+		<Unit filename="src/mathlib.cpp" />
+		<Unit filename="src/mathlib.h" />
 		<Unit filename="src/ms3dloader.cpp" />
 		<Unit filename="src/ms3dloader.h" />
 		<Unit filename="src/texture.cpp" />

@@ -181,8 +181,6 @@ typedef struct {
 
 namespace Ms3d_Space
 {
-
-//
 // max values
 #define MAX_VERTICES    8192
 #define MAX_TRIANGLES   16384
@@ -191,116 +189,161 @@ namespace Ms3d_Space
 #define MAX_JOINTS      128
 #define MAX_KEYFRAMES   216     // increase when needed
 
-//
-// flags
 #define SELECTED        1
 #define HIDDEN          2
 #define SELECTED2       4
 #define DIRTY           8
 
-//
-// types
-#ifndef byte
-typedef unsigned char byte;
-#endif // byte
+struct ms3d_header_t
+{
+    char    id[10];
+    int     version;
+} ;
 
-#ifndef word
-typedef unsigned short word;
-#endif // word
+struct ms3d_vertex_t
+{
+    unsigned char    flags;
+    float   vertex[3];
+    char    boneId;
+    unsigned char    referenceCount;
 
-// First comes the header.
-typedef struct {
-    char    id[10];                                     // always "MS3D000000"
-    int     version;                                    // 3
-} ms3d_header_t;
+    //========== 附加部分 ==========
+    char boneIds[3];
+	unsigned char weights[3];
+	unsigned int extra;
+	float renderColor[3];
+} ;
 
-// Then comes nNumVertices * sizeof (ms3d_vertex_t)
-typedef struct {
-    byte    flags;                                      // SELECTED | SELECTED2 | HIDDEN
-    float   vertex[3];                                  //
-    char    boneId;                                     // -1 = no bone
-    byte    referenceCount;
-} ms3d_vertex_t;
+struct ms3d_triangle_t
+{
+    unsigned short    flags;
+    unsigned short    vertexIndices[3];
+    float   vertexNormals[3][3];
+    float   s[3];
+    float   t[3];
+    unsigned char    smoothingGroup;
+    unsigned char    groupIndex;
 
-// nNumTriangles * sizeof (ms3d_triangle_t)
-typedef struct {
-    word    flags;                                      // SELECTED | SELECTED2 | HIDDEN
-    word    vertexIndices[3];                           //
-    float   vertexNormals[3][3];                        //
-    float   s[3];                                       //
-    float   t[3];                                       //
-    byte    smoothingGroup;                             // 1 - 32
-    byte    groupIndex;                                 //
-} ms3d_triangle_t;
+    //========== 附加部分 ==========
+    float normal[3];
+} ;
 
-// nNumGroups * sizeof (ms3d_group_t)
-typedef struct {
-    byte            flags;                              // SELECTED | HIDDEN
-    char            name[32];                           //
-    word            numtriangles;                       //
-    word            *triangleIndices;      // the groups group the triangles
-    char            materialIndex;                      // -1 = no material
-} ms3d_group_t;
+struct ms3d_group_t
+{
+    unsigned char   flags;
+    char            name[32];
+    unsigned short  numtriangles;
+    unsigned short* triangleIndices;
+    char            materialIndex;
+    //========== 附加部分 ==========
+    size_t         numcomment;
+    char*          comment;
+} ;
 
-// nNumMaterials * sizeof (ms3d_material_t)
-typedef struct {
-    char            name[32];                           //
-    float           ambient[4];                         //
-    float           diffuse[4];                         //
-    float           specular[4];                        //
-    float           emissive[4];                        //
-    float           shininess;                          // 0.0f - 128.0f
-    float           transparency;                       // 0.0f - 1.0f
-    char            mode;                               // 0, 1, 2 is unused now
-    char            texture[128];                       // texture.bmp
-    char            alphamap[128];                      // alpha.bmp
-} ms3d_material_t;
+struct ms3d_material_t
+{
+    char            name[32];
+    float           ambient[4];
+    float           diffuse[4];
+    float           specular[4];
+    float           emissive[4];
+    float           shininess;
+    float           transparency;
+    char            mode;
+    char            texture[128];
+    char            alphamap[128];
+    //========== 附加部分 ==========
+    unsigned char   id;
+    size_t          numcomment;
+    char*           comment;
+} ;
 
-// nNumJoints * sizeof (ms3d_joint_t)
-typedef struct {
-    float           time;                               // time in seconds
-    float           rotation[3];                        // x, y, z angles
-} ms3d_keyframe_rot_t;
+struct ms3d_keyframe_t
+{
+	float time;
+	float key[3];
+};
 
-typedef struct {
-    float           time;                               // time in seconds
-    float           position[3];                        // local position
-} ms3d_keyframe_pos_t;
+struct ms3d_tangent_t
+{
+	float tangentIn[3];
+	float tangentOut[3];
+};
 
-typedef struct {
-    byte            flags;                              // SELECTED | DIRTY
-    char            name[32];                           //
-    char            parentName[32];                     //
-    float           rotation[3];                        // local reference matrix
-    float           position[3];
 
-    word            numKeyFramesRot;                    //
-    word            numKeyFramesTrans;                  //
+struct ms3d_joint_t
+{
+    unsigned char   flags;
+    char            name[32];
+    char            parentName[32];
+    float           rot[3];
+    float           pos[3];
 
-    ms3d_keyframe_rot_t *keyFramesRot;      // local animation matrices
-    ms3d_keyframe_pos_t *keyFramesTrans;  // local animation matrices
-} ms3d_joint_t;
+    unsigned short  numKeyFramesRot;
+    unsigned short  numKeyFramesTrans;
 
-// read a file
-typedef struct {
+    ms3d_keyframe_t* keyFramesRot;
+    ms3d_keyframe_t* keyFramesTrans;
+
+    //========== 附加部分 ==========
+    ms3d_tangent_t* tangents;
+    size_t numcomment;
+    char* comment;
+	float color[3];
+
+	// used for rendering
+	int parentIndex;
+	float matLocalSkeleton[3][4];
+	float matGlobalSkeleton[3][4];
+
+	float matLocal[3][4];
+	float matGlobal[3][4];
+} ;
+
+
+struct ms3d_model_t
+{
     ms3d_header_t header;
-    word nNumVertices;
+
+    unsigned short nNumVertices;
     ms3d_vertex_t *vertexes;
-    word nNumTriangles;
+
+    unsigned short nNumTriangles;
     ms3d_triangle_t *triangles;
-    word nNumGroups;
+
+    unsigned short nNumGroups;
     ms3d_group_t *groups;
-    word nNumMaterials;
+
+    unsigned short nNumMaterials;
     ms3d_material_t *materials;
+
     float fAnimationFPS;
     float fCurrentTime;
     int iTotalFrames;
-    word nNumJoints;
-    ms3d_joint_t *joints;
-} ms3d_file_t;
 
-bool load_ms3d_file(ms3d_file_t* t, const char* file);
-void dump_ms3d_file(ms3d_file_t* t, const char* file);
+    unsigned short nNumJoints;
+    ms3d_joint_t *joints;
+
+    //=========== 附加部分 ================
+    size_t  numcomment;
+    char*   comment;
+
+    float fjointize;
+	int iTransparencyMode;
+	float falphaRef;
+} ;
+
+bool load_ms3d_file(ms3d_model_t* t, const char* file);
+void dump_ms3d_file(ms3d_model_t* t, const char* file);
+
+void setup_jsons(ms3d_model_t* t);       // 初始化骨骼位置
+void setup_tangents(ms3d_model_t* t);    // 设置切线??
+void set_frame(ms3d_model_t* t);
+void evaluate_json(ms3d_model_t* t, int index, float frame);
+
+void transform_vertex(const ms3d_vertex_t *vertex, float out[3]);
+void transform_normal(const ms3d_vertex_t *vertex, const float normal[3], float out[3]);
+void fill_joint_indices_and_weights(const ms3d_vertex_t *vertex, int jointIndices[4], int jointWeights[4]);
 
 };
 
