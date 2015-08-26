@@ -1,6 +1,11 @@
-# simplefreeglutgui
+# OpenGLSample
 ---   
-simple freeglut gui   
-- this a gui base on freeglut, small and simple, button label(english), slider
+simple glfw3 sample   
+- glfw3   
+- ms3d (load and render)   
+- tga load    
+- glsl   
+- simple gui (button, fnt label, slider)   
+
 
 
