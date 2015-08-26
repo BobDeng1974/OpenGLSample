@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 /*
 //
 //                MilkShape 3D 1.4.0 File Format Specification
@@ -336,10 +334,11 @@ struct ms3d_model_t
 bool load_ms3d_file(ms3d_model_t* t, const char* file);
 void dump_ms3d_file(ms3d_model_t* t, const char* file);
 
-void setup_jsons(ms3d_model_t* t);       // 初始化骨骼位置
-void setup_tangents(ms3d_model_t* t);    // 设置切线??
-void set_frame(ms3d_model_t* t);
-void evaluate_json(ms3d_model_t* t, int index, float frame);
+int find_joint_by_name(ms3d_model_t* t, const char *name);
+void setup_joints(ms3d_model_t* t);
+void setup_tangents(ms3d_model_t* t);
+void set_frame(ms3d_model_t* t, float frame);
+void evaluate_joint(ms3d_model_t* t, int index, float frame);
 
 void transform_vertex(const ms3d_vertex_t *vertex, float out[3]);
 void transform_normal(const ms3d_vertex_t *vertex, const float normal[3], float out[3]);

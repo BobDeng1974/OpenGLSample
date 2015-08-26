@@ -1,5 +1,5 @@
 #include "ms3dloader.h"
-
+#include "mathlib.h"
 
 
 
@@ -236,7 +236,7 @@ bool load_ms3d_file(ms3d_model_t* t, const char* file)
 		fread(&subVersion, sizeof(int), 1, fp);
 		if (subVersion == 2)
 		{
-			for (int i = 0; i < nNumVertices; i++)
+			for (int i = 0; i < nNumVertices; ++i)
 			{
 				fread(&t->vertexes[i].boneIds[0], sizeof(char), 3, fp);
 				fread(&t->vertexes[i].weights[0], sizeof(unsigned char), 3, fp);
@@ -245,7 +245,7 @@ bool load_ms3d_file(ms3d_model_t* t, const char* file)
 		}
 		else if (subVersion == 1)
 		{
-			for (int i = 0; i < nNumVertices; i++)
+			for (int i = 0; i < nNumVertices; ++i)
 			{
 				fread(&t->vertexes[i].boneIds[0], sizeof(char), 3, fp);
 				fread(&t->vertexes[i].weights[0], sizeof(unsigned char), 3, fp);
@@ -381,11 +381,136 @@ void dump_ms3d_file(ms3d_model_t* t, const char* file)
     }
 }
 
+int find_joint_by_name(ms3d_model_t* t, const char *name)
+{
+    for (unsigned short i = 0; i < t->nNumJoints; ++i)
+	{
+		if (strcmp(t->joints[i].name, name) == 0)
+			return i;
+	}
 
-void setup_jsons(ms3d_model_t* t){}
-void setup_tangents(ms3d_model_t* t){}
-void set_frame(ms3d_model_t* t){}
-void evaluate_json(ms3d_model_t* t, int index, float frame){}
+	return -1;
+}
+
+void setup_joints(ms3d_model_t* t)
+{
+    for (unsigned short i = 0; i < t->nNumJoints; ++i)
+    {
+        ms3d_joint_t* joint = &t->joints[i];
+        joint->parentIndex = find_joint_by_name(t, joint->parentName);
+    }
+
+    // 对所有骨骼旋转平移成初始的姿势
+    for (unsigned short i = 0; i < t->nNumJoints; ++i)
+    {
+        ms3d_joint_t* joint = &t->joints[i];
+        AngleMatrix(joint->rot, joint->matLocalSkeleton);
+        joint->matLocalSkeleton[0][3] = joint->pos[0];
+        joint->matLocalSkeleton[1][3] = joint->pos[1];
+        joint->matLocalSkeleton[2][3] = joint->pos[2];
+
+        if (joint->parentIndex == -1)
+        {
+            memcpy(joint->matGlobalSkeleton, joint->matLocalSkeleton, sizeof(joint->matGlobalSkeleton));
+        }
+        else
+        {
+            ms3d_joint_t *parentJoint = &t->joints[joint->parentIndex];
+            // 根据父骨骼的全局变换和当前骨骼的局部变换，计算出当前骨骼的全局变换
+			R_ConcatTransforms(parentJoint->matGlobalSkeleton, joint->matLocalSkeleton, joint->matGlobalSkeleton);
+        }
+        setup_tangents(t);
+    }
+
+}
+
+void setup_tangents(ms3d_model_t* t)
+{
+    for (unsigned short i = 0; i < t->nNumJoints; ++i)
+    {
+        ms3d_joint_t* joint = &t->joints[i];
+        int numKeyFramesTrans = joint->numKeyFramesTrans;
+        joint->tangents = new ms3d_tangent_t[numKeyFramesTrans];
+
+        // clear all tangents (zero derivatives)
+        for (int k = 0; k < numKeyFramesTrans; ++k)
+        {
+            joint->tangents[k].tangentIn[0] = 0.0f;
+            joint->tangents[k].tangentIn[1] = 0.0f;
+            joint->tangents[k].tangentIn[2] = 0.0f;
+
+            joint->tangents[k].tangentOut[0] = 0.0f;
+            joint->tangents[k].tangentOut[1] = 0.0f;
+            joint->tangents[k].tangentOut[2] = 0.0f;
+        }
+
+        // if there are more than 2 keys,
+        // we can calculate tangents,
+        // otherwise we use zero derivatives
+		if (numKeyFramesTrans > 2)
+		{
+            for (int k = 0; k < numKeyFramesTrans; ++k)
+			{
+				// make the curve tangents looped
+				int k0 = k - 1;
+				if (k0 < 0)
+					k0 = numKeyFramesTrans - 1;
+				int k1 = k;
+				int k2 = k + 1;
+				if (k2 >= numKeyFramesTrans)
+					k2 = 0;
+
+				// calculate the tangent, which is the vector from key[k - 1] to key[k + 1]
+				float tangent[3];
+				tangent[0] = (joint->keyFramesTrans[k2].key[0] - joint->keyFramesTrans[k0].key[0]);
+				tangent[1] = (joint->keyFramesTrans[k2].key[1] - joint->keyFramesTrans[k0].key[1]);
+				tangent[2] = (joint->keyFramesTrans[k2].key[2] - joint->keyFramesTrans[k0].key[2]);
+
+				// weight the incoming and outgoing tangent by their time to
+				// avoid changes in speed, if the keys are not within the same interval
+				float dt1 = joint->keyFramesTrans[k1].time - joint->keyFramesTrans[k0].time;
+				float dt2 = joint->keyFramesTrans[k2].time - joint->keyFramesTrans[k1].time;
+				float dt = dt1 + dt2;
+				joint->tangents[k1].tangentIn[0] = tangent[0] * dt1 / dt;
+				joint->tangents[k1].tangentIn[1] = tangent[1] * dt1 / dt;
+				joint->tangents[k1].tangentIn[2] = tangent[2] * dt1 / dt;
+
+				joint->tangents[k1].tangentOut[0] = tangent[0] * dt2 / dt;
+				joint->tangents[k1].tangentOut[1] = tangent[1] * dt2 / dt;
+				joint->tangents[k1].tangentOut[2] = tangent[2] * dt2 / dt;
+			}
+		}
+
+    }
+}
+
+void set_frame(ms3d_model_t* t, float frame)
+{
+    if (frame < 0.0f)
+    {
+        for (size_t i = 0; i < t->nNumJoints; ++i)
+        {
+            ms3d_joint_t* joint = &t->joints[i];
+            memcpy(joint->matLocal, joint->matLocalSkeleton, sizeof(joint->matLocal));
+            memcpy(joint->matGlobal, joint->matGlobalSkeleton, sizeof(joint->matGlobal));
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < t->nNumJoints; i++)
+		{
+			evaluate_joint(t, i, frame);
+		}
+    }
+
+    t->fCurrentTime = frame;
+}
+
+void evaluate_joint(ms3d_model_t* t, int index, float frame)
+{
+    ms3d_joint_t *joint = &t->joints[index];
+    // TODO
+}
 
 void transform_vertex(const ms3d_vertex_t *vertex, float out[3]);
 void transform_normal(const ms3d_vertex_t *vertex, const float normal[3], float out[3]){}
