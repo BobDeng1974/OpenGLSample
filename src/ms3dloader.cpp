@@ -510,6 +510,13 @@ void evaluate_joint(ms3d_model_t* t, int index, float frame)
 {
     ms3d_joint_t *joint = &t->joints[index];
     // TODO
+    vec3_t pos = { 0.0f, 0.0f, 0.0f };
+    int numKeyFramesTrans = joint->numKeyFramesTrans;
+    if (numKeyFramesTrans > 0)
+    {
+        int i1 = -1;
+        int i2 = -1;
+    }
 }
 
 void transform_vertex(const ms3d_vertex_t *vertex, float out[3]);
