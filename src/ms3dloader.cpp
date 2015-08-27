@@ -2,10 +2,80 @@
 #include "mathlib.h"
 
 
+#include <GL/gl.h>
+#include <GL/glu.h>
+
 
 namespace Ms3d_Space
 {
 
+//======================================================
+//
+ms3d_model_t* create_ms3d_model()
+{
+    ms3d_model_t* p = new ms3d_model_t;
+    memset(p, 0, sizeof(ms3d_model_t));
+    return p;
+}
+
+//======================================================
+//
+void delete_ms3d_model(ms3d_model_t* t)
+{
+    if (t->vertexes)
+    {
+        delete[] t->vertexes;
+    }
+    if (t->triangles)
+    {
+        delete[] t->triangles;
+    }
+    if (t->groups)
+    {
+        for (unsigned short i = 0; i < t->nNumGroups; ++i)
+        {
+            ms3d_group_t* gt = &t->groups[i];
+            if (gt->triangleIndices)
+                delete[] gt->triangleIndices;
+            if (gt->comment)
+                delete[] gt->comment;
+        }
+        delete[] t->groups;
+    }
+    if (t->materials)
+    {
+        for (unsigned short i = 0; i < t->nNumMaterials; ++i)
+        {
+            ms3d_material_t* mt = &t->materials[i];
+            if (mt->comment)
+                delete[] mt->comment;
+        }
+        delete[] t->materials;
+    }
+    if (t->joints)
+    {
+        for (unsigned short i = 0; i < t->nNumJoints; ++i)
+        {
+            ms3d_joint_t* jt = &t->joints[i];
+            if (jt->keyFramesRot)
+                delete[] jt->keyFramesRot;
+            if (jt->keyFramesTrans)
+                delete[] jt->keyFramesTrans;
+            if (jt->comment)
+                delete[] jt->comment;
+            if (jt->tangents)
+                delete[] jt->tangents;
+        }
+        delete[] t->joints;
+    }
+    if (t->comment)
+    {
+        delete[] t->comment;
+    }
+}
+
+//======================================================
+//
 bool load_ms3d_file(ms3d_model_t* t, const char* file)
 {
     ms3d_header_t& header             = t->header;
@@ -300,6 +370,8 @@ bool load_ms3d_file(ms3d_model_t* t, const char* file)
 }
 
 
+//======================================================
+//
 void dump_ms3d_file(ms3d_model_t* t, const char* file)
 {
     FILE *fp = fopen(file, "w");
@@ -381,6 +453,8 @@ void dump_ms3d_file(ms3d_model_t* t, const char* file)
     }
 }
 
+//======================================================
+//
 int find_joint_by_name(ms3d_model_t* t, const char *name)
 {
     for (unsigned short i = 0; i < t->nNumJoints; ++i)
@@ -392,6 +466,8 @@ int find_joint_by_name(ms3d_model_t* t, const char *name)
 	return -1;
 }
 
+//======================================================
+//
 void setup_joints(ms3d_model_t* t)
 {
     for (unsigned short i = 0; i < t->nNumJoints; ++i)
@@ -424,6 +500,8 @@ void setup_joints(ms3d_model_t* t)
 
 }
 
+//======================================================
+//
 void setup_tangents(ms3d_model_t* t)
 {
     for (unsigned short i = 0; i < t->nNumJoints; ++i)
@@ -451,7 +529,7 @@ void setup_tangents(ms3d_model_t* t)
 		{
             for (int k = 0; k < numKeyFramesTrans; ++k)
 			{
-				// make the curve tangents looped
+				// make the curve tangents looped 循环计算曲线切线
 				int k0 = k - 1;
 				if (k0 < 0)
 					k0 = numKeyFramesTrans - 1;
@@ -484,6 +562,8 @@ void setup_tangents(ms3d_model_t* t)
     }
 }
 
+//======================================================
+//
 void set_frame(ms3d_model_t* t, float frame)
 {
     if (frame < 0.0f)
@@ -506,24 +586,420 @@ void set_frame(ms3d_model_t* t, float frame)
     t->fCurrentTime = frame;
 }
 
+//======================================================
+//
 void evaluate_joint(ms3d_model_t* t, int index, float frame)
 {
-    ms3d_joint_t *joint = &t->joints[index];
-    // TODO
+    ms3d_joint_t *jt = &t->joints[index];
+
     vec3_t pos = { 0.0f, 0.0f, 0.0f };
-    int numKeyFramesTrans = joint->numKeyFramesTrans;
+    int numKeyFramesTrans = jt->numKeyFramesTrans;
     if (numKeyFramesTrans > 0)
     {
         int i1 = -1;
         int i2 = -1;
+        // 时间在两针之间的
+        // find the two keys, where "frame" is in between for the position channel
+        for (int i = 0; i < (numKeyFramesTrans - 1); ++i)
+        {
+            if (frame >= jt->keyFramesTrans[i].time && frame < jt->keyFramesTrans[i + 1].time)
+            {
+                i1 = i;
+                i2 = i + 1;
+                break;
+            }
+        }
+
+        // if there are no such keys
+        if (i1 == -1 || i2 == -1)
+        {
+            int index = -1;
+            if (frame < jt->keyFramesTrans[0].time)
+                index = 0;
+            // or the last key
+            else if (frame >= jt->keyFramesTrans[numKeyFramesTrans - 1].time)
+                index = numKeyFramesTrans - 1;
+            pos[0] = jt->keyFramesTrans[index].key[0];
+            pos[1] = jt->keyFramesTrans[index].key[1];
+            pos[2] = jt->keyFramesTrans[index].key[2];
+        }
+        else
+        {
+            ms3d_keyframe_t* p0 = &jt->keyFramesTrans[i1];
+            ms3d_keyframe_t* p1 = &jt->keyFramesTrans[i2];
+            ms3d_tangent_t* m0 = &jt->tangents[i1];
+            ms3d_tangent_t* m1 = &jt->tangents[i2];
+
+            // normalize the time between the keys into [0..1]
+            float dt = (frame - jt->keyFramesTrans[i1].time) /
+                (jt->keyFramesTrans[i2].time - jt->keyFramesTrans[i1].time);
+            float t2 = dt * dt;
+            float t3 = t2 * dt;
+
+            // calculate hermite basis计算插值
+            float h1 =  2.0f * t3 - 3.0f * t2 + 1.0f;
+			float h2 = -2.0f * t3 + 3.0f * t2;
+			float h3 =         t3 - 2.0f * t2 + dt;
+			float h4 =         t3 -        t2;
+
+            // do hermite interpolation
+			pos[0] = h1 * p0->key[0] + h3 * m0->tangentOut[0] + h2 * p1->key[0] + h4 * m1->tangentIn[0];
+			pos[1] = h1 * p0->key[1] + h3 * m0->tangentOut[1] + h2 * p1->key[1] + h4 * m1->tangentIn[1];
+			pos[2] = h1 * p0->key[2] + h3 * m0->tangentOut[2] + h2 * p1->key[2] + h4 * m1->tangentIn[2];
+        }
+    }
+
+    vec4_t quat = { 0.0f, 0.0f, 0.0f, 1.0f };
+    int numKeyFramesRot = jt->numKeyFramesRot;
+    if (numKeyFramesRot > 0)
+    {
+        int i1 = -1;
+        int i2 = -1;
+        // find the two keys, where "frame" is in between for the rotation channel
+        for (int i = 0; i < (numKeyFramesRot - 1); ++i)
+        {
+            if (frame >= jt->keyFramesRot[i].time && frame < jt->keyFramesRot[i].time)
+            {
+                i1 = i;
+                i2 = i + 1;
+                break;
+            }
+        }
+
+        // if there are no such key
+        if (i1 == -1 || i2 == -1)
+        {
+            int index = -1;
+            if (frame < jt->keyFramesRot[0].time)
+                index = 0;
+            else if (frame >= jt->keyFramesRot[numKeyFramesRot - 1].time)
+                index = numKeyFramesRot - 1;
+            AngleQuaternion(jt->keyFramesRot[index].key, quat);
+        }
+        // there are such keys, so do the quaternion slerp interpolation
+        else
+        {
+            float dt = (frame - jt->keyFramesRot[i1].time) /
+                (jt->keyFramesRot[i2].time - jt->keyFramesRot[i1].time);
+                vec4_t q1;
+                AngleQuaternion(jt->keyFramesRot[i1].key, q1);
+                vec4_t q2;
+                AngleQuaternion(jt->keyFramesRot[i2].key, q2);
+                QuaternionSlerp(q1, q2, dt, quat);
+        }
+    }
+
+    // make a matrix from pos/quat
+    float matAnimate[3][4];
+    QuaternionMatrix(quat, matAnimate);
+    matAnimate[0][3] = pos[0];
+    matAnimate[1][3] = pos[1];
+    matAnimate[2][3] = pos[2];
+
+    // animate the local joint matrix using: matLocal = matLocalSkeleton * matAnimate
+    R_ConcatTransforms(jt->matLocalSkeleton, matAnimate, jt->matLocal);
+    // build up the hierarchy if joints
+	// matGlobal = matGlobal(parent) * matLocal
+	if (jt->parentIndex == -1)
+    {
+        memcpy(jt->matGlobal, jt->matLocal, sizeof(jt->matGlobal));
+    }
+    else
+    {
+        ms3d_joint_t* parentJoint = &t->joints[jt->parentIndex];
+        R_ConcatTransforms(parentJoint->matGlobal, jt->matLocal, jt->matGlobal);
+    }
+
+}
+
+//======================================================
+//
+void transform_vertex(const ms3d_model_t* t, const ms3d_vertex_t *vertex, float out[3])
+{
+    int jointIndices[4], jointWeights[4];
+    fill_joint_indices_and_weights(vertex, jointIndices, jointWeights);
+    if (jointIndices[0] < 0 || jointIndices[0] >= (int)t->nNumJoints || t->fCurrentTime <= 0.0f)
+    {
+        out[0] = vertex->vertex[0];
+        out[1] = vertex->vertex[1];
+        out[2] = vertex->vertex[2];
+    }
+    else
+    {
+         // count valid weights
+		int numWeights = 0;
+		for (int i = 0; i < 4; ++i)
+        {
+            if (jointWeights[i] > 0 && jointIndices[i] >= 0 && jointIndices[i] < (int)t->nNumJoints)
+                ++numWeights;
+            else
+                break;
+        }
+
+        // init
+        out[0] = 0.0f;
+        out[1] = 0.0f;
+        out[2] = 0.0f;
+
+        float weights[4] = {
+            (float)jointWeights[0] / 100.0f,
+            (float)jointWeights[1] / 100.0f,
+            (float)jointWeights[2] / 100.0f,
+            (float)jointWeights[3] / 100.0f};
+        if (numWeights == 0)
+        {
+            numWeights = 1;
+            weights[0] = 1.0f;
+        }
+
+        // add weighted vertices
+        for (int i = 0; i < numWeights; ++i)
+        {
+            const ms3d_joint_t* jt = &t->joints[jointIndices[i]];
+            vec3_t tmp, vert;
+            VectorITransform(vertex->vertex, jt->matGlobalSkeleton, tmp);
+            VectorRotate(tmp, jt->matGlobal, vert);
+
+            out[0] += vert[0] * weights[i];
+            out[1] += vert[1] * weights[i];
+            out[2] += vert[2] * weights[i];
+        }
     }
 }
 
-void transform_vertex(const ms3d_vertex_t *vertex, float out[3]);
-void transform_normal(const ms3d_vertex_t *vertex, const float normal[3], float out[3]){}
-void fill_joint_indices_and_weights(const ms3d_vertex_t *vertex, int jointIndices[4], int jointWeights[4]){}
+//======================================================
+//
+void transform_normal(const ms3d_model_t* t, const ms3d_vertex_t *vertex, const float normal[3], float out[3])
+{
+    int jointIndices[4], jointWeights[4];
+    fill_joint_indices_and_weights(vertex, jointIndices, jointWeights);
+    if (jointIndices[0] < 0 || jointIndices[0] >= (int)t->nNumJoints || t->fCurrentTime <= 0.0f)
+    {
+        out[0] = normal[0];
+		out[1] = normal[1];
+		out[2] = normal[2];
+    }
+    else
+    {
+        // count valid weights
+		int numWeights = 0;
+		for (int i = 0; i < 4; ++i)
+        {
+            if (jointWeights[i] > 0 && jointIndices[i] >= 0 && jointIndices[i] < (int)t->nNumJoints)
+                ++numWeights;
+            else
+                break;
+        }
+
+        // init
+        out[0] = 0.0f;
+        out[1] = 0.0f;
+        out[2] = 0.0f;
+
+        float weights[4] = {
+            (float)jointWeights[0] / 100.0f,
+            (float)jointWeights[1] / 100.0f,
+            (float)jointWeights[2] / 100.0f,
+            (float)jointWeights[3] / 100.0f};
+        if (numWeights == 0)
+        {
+            numWeights = 1;
+            weights[0] = 1.0f;
+        }
+
+        // add weighted normals
+        for (int i = 0; i < numWeights; ++i)
+        {
+            const ms3d_joint_t* jt = &t->joints[jointIndices[i]];
+            vec3_t tmp, norm;
+            VectorIRotate(normal, jt->matGlobalSkeleton, tmp);
+            VectorRotate(tmp, jt->matGlobal, norm);
+
+            out[0] += norm[0] * weights[i];
+            out[1] += norm[1] * weights[i];
+            out[2] += norm[2] * weights[i];
+        }
+    }
+}
+
+//======================================================
+//
+void fill_joint_indices_and_weights(const ms3d_vertex_t *vertex, int jointIndices[4], int jointWeights[4])
+{
+    jointIndices[0] = vertex->boneId;
+    jointIndices[1] = vertex->boneIds[0];
+    jointIndices[2] = vertex->boneIds[1];
+    jointIndices[3] = vertex->boneIds[2];
+
+    jointWeights[0] = 100;
+    jointWeights[1] = 0;
+    jointWeights[2] = 0;
+    jointWeights[3] = 0;
+
+    if (vertex->weights[0] != 0 || vertex->weights[1] != 0 || vertex->weights[2] != 0)
+    {
+        jointWeights[0] = vertex->weights[0];
+        jointWeights[1] = vertex->weights[1];
+        jointWeights[2] = vertex->weights[2];
+        jointWeights[3] = 100 - (vertex->weights[0] + vertex->weights[1] + vertex->weights[2]);
+    }
+}
 
 
+//======================================================
+//
+void bind_material(const ms3d_model_t* t, int materialIndex)
+{
+if (materialIndex < 0 || materialIndex >= t->nNumMaterials)
+	{
+		glDepthMask(GL_TRUE);
+		glDisable(GL_ALPHA_TEST);
+		glDisable(GL_TEXTURE_GEN_S);
+		glDisable(GL_TEXTURE_GEN_T);
+		glColor4f(1, 1, 1, 1);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_BLEND);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		float ma[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+		float md[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
+		float ms[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		float me[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		float mss = 0.0f;
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ma);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, md);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, ms);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, me);
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, mss);
+	}
+	else
+	{
+		const ms3d_material_t *material = &t->materials[materialIndex];
+		glEnable(GL_TEXTURE_2D);
+
+        if (material->transparency < 1.0f || material->mode & HASALPHA)
+        {
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColor4f(1.0f, 1.0f, 1.0f, material->transparency);
+			glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
+
+			if (t->iTransparencyMode == TRANSPARENCY_MODE_SIMPLE)
+			{
+				glDepthMask(GL_FALSE);
+				glEnable(GL_ALPHA_TEST);
+				glAlphaFunc(GL_GREATER, 0.0f);
+			}
+			else if (t->iTransparencyMode == TRANSPARENCY_MODE_ALPHAREF)
+			{
+				glDepthMask(GL_TRUE);
+				glEnable(GL_ALPHA_TEST);
+				glAlphaFunc(GL_GREATER, t->falphaRef);
+			}
+        }
+        else
+        {
+            glDisable(GL_BLEND);
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
+        }
+
+		if (material->mode & SPHEREMAP)
+		{
+			glEnable(GL_TEXTURE_GEN_S);
+			glEnable(GL_TEXTURE_GEN_T);
+			glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+		}
+		else
+		{
+			glDisable(GL_TEXTURE_GEN_S);
+			glDisable(GL_TEXTURE_GEN_T);
+		}
+		glBindTexture(GL_TEXTURE_2D, material->id);
+
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, material->ambient);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material->diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material->specular);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, material->emissive);
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material->shininess);
+	}
+}
+
+//======================================================
+//
+void render_gl(const ms3d_model_t* t, bool withMaterial, bool flatShaded)
+{
+    int numGroups = t->nNumGroups;
+	for (int i = 0; i < numGroups; i++)
+	{
+		const ms3d_group_t *group = &t->groups[i];
+
+		if (withMaterial)
+            bind_material(t, group->materialIndex);
+		else
+			bind_material(t, -1);
+
+		glBegin(GL_TRIANGLES);
+		for (size_t j = 0; j < group->numtriangles; j++)
+		{
+			const ms3d_triangle_t *triangle = &t->triangles[group->triangleIndices[j]];
+			for (int v = 0; v < 3; v++)
+			{
+				const ms3d_vertex_t *vertex = &t->vertexes[triangle->vertexIndices[v]];
+
+				glTexCoord2f(triangle->s[v], triangle->t[v]);
+
+				float normal[3];
+				if (flatShaded)
+					transform_normal(t, vertex, triangle->normal, normal);
+				else
+					transform_normal(t, vertex, triangle->vertexNormals[v], normal);
+				glNormal3fv(normal);
+
+				float pos[3];
+				transform_vertex(t, vertex, pos);
+				glVertex3fv(pos);
+			}
+		}
+		glEnd();
+	}
+}
+
+//======================================================
+//
+void render_joints(const ms3d_model_t* t, int what)
+{
+    if (what == eJointLines)
+	{
+		glBegin(GL_LINES);
+		for (int i = 0; i < t->nNumJoints; i++)
+		{
+			const ms3d_joint_t *joint = &t->joints[i];
+			if (joint->parentIndex == -1)
+			{
+				glVertex3f(joint->matGlobal[0][3], joint->matGlobal[1][3], joint->matGlobal[2][3]);
+				glVertex3f(joint->matGlobal[0][3], joint->matGlobal[1][3], joint->matGlobal[2][3]);
+			}
+			else
+			{
+				const ms3d_joint_t *parentJoint = &t->joints[joint->parentIndex];
+				glVertex3f(joint->matGlobal[0][3], joint->matGlobal[1][3], joint->matGlobal[2][3]);
+				glVertex3f(parentJoint->matGlobal[0][3], parentJoint->matGlobal[1][3], parentJoint->matGlobal[2][3]);
+			}
+		}
+		glEnd();
+	}
+	else if (what == eJointPoints)
+	{
+		glBegin(GL_POINTS);
+		for (int i = 0; i < t->nNumJoints; i++)
+		{
+			const ms3d_joint_t *joint = &t->joints[i];
+			glVertex3f(joint->matGlobal[0][3], joint->matGlobal[1][3], joint->matGlobal[2][3]);
+		}
+		glEnd();
+	}
+}
 };
 
 

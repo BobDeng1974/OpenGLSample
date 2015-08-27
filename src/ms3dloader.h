@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+
+// this from http://www.chumba.ch/chumbalum-soft//files/msViewer2.zip helper
+// i change some code to c
+
 /*
 //
 //                MilkShape 3D 1.4.0 File Format Specification
@@ -192,6 +197,18 @@ namespace Ms3d_Space
 #define SELECTED2       4
 #define DIRTY           8
 
+#define SPHEREMAP		0x80
+#define HASALPHA		0x40
+#define COMBINEALPHA    0x20
+
+#define TRANSPARENCY_MODE_SIMPLE				0
+#define TRANSPARENCY_MODE_DEPTHSORTEDTRIANGLES	1
+#define TRANSPARENCY_MODE_ALPHAREF				2
+
+
+#define eJointLines 0
+#define eJointPoints 1
+
 struct ms3d_header_t
 {
     char    id[10];
@@ -331,6 +348,9 @@ struct ms3d_model_t
 	float falphaRef;
 } ;
 
+ms3d_model_t* create_ms3d_model();
+void delete_ms3d_model(ms3d_model_t* t);
+
 bool load_ms3d_file(ms3d_model_t* t, const char* file);
 void dump_ms3d_file(ms3d_model_t* t, const char* file);
 
@@ -340,10 +360,14 @@ void setup_tangents(ms3d_model_t* t);
 void set_frame(ms3d_model_t* t, float frame);
 void evaluate_joint(ms3d_model_t* t, int index, float frame);
 
-void transform_vertex(const ms3d_vertex_t *vertex, float out[3]);
-void transform_normal(const ms3d_vertex_t *vertex, const float normal[3], float out[3]);
+void transform_vertex(const ms3d_model_t* t, const ms3d_vertex_t *vertex, float out[3]);
+void transform_normal(const ms3d_model_t* t, const ms3d_vertex_t *vertex, const float normal[3], float out[3]);
 void fill_joint_indices_and_weights(const ms3d_vertex_t *vertex, int jointIndices[4], int jointWeights[4]);
 
+
+void bind_material(const ms3d_model_t* t, int materialIndex);
+void render_gl(const ms3d_model_t* t, bool withMaterial, bool flatShaded);
+void render_joints(const ms3d_model_t* t, int what);
 };
 
 #endif // __MS3D_LOADER_H__

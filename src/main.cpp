@@ -339,11 +339,9 @@ int main1(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-
-    Ms3d_Space::ms3d_model_t file;
-    Ms3d_Space::load_ms3d_file(&file, "Data/tin_open_lay.ms3d");
-    Ms3d_Space::dump_ms3d_file(&file, "Data/tin_open_lay.log");
-    // print data
-
-
+    using namespace Ms3d_Space;
+    ms3d_model_t* model = create_ms3d_model();
+    load_ms3d_file(model, "Data/tin_open_lay.ms3d");
+    dump_ms3d_file(model, "Data/tin_open_lay.log");
+    delete_ms3d_model(model);
 }
