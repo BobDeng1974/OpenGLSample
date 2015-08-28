@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 
+using namespace std;
 
 
 // this from http://www.chumba.ch/chumbalum-soft//files/msViewer2.zip helper
@@ -354,6 +356,7 @@ void delete_ms3d_model(ms3d_model_t* t);
 bool load_ms3d_file(ms3d_model_t* t, const char* file);
 void dump_ms3d_file(ms3d_model_t* t, const char* file);
 
+unsigned int load_gl_tga(const char* file);
 int find_joint_by_name(ms3d_model_t* t, const char *name);
 void setup_joints(ms3d_model_t* t);
 void setup_tangents(ms3d_model_t* t);
@@ -365,9 +368,30 @@ void transform_normal(const ms3d_model_t* t, const ms3d_vertex_t *vertex, const 
 void fill_joint_indices_and_weights(const ms3d_vertex_t *vertex, int jointIndices[4], int jointWeights[4]);
 
 
-void bind_material(const ms3d_model_t* t, int materialIndex);
-void render_gl(const ms3d_model_t* t, bool withMaterial, bool flatShaded);
-void render_joints(const ms3d_model_t* t, int what);
+bool gl_load_material(ms3d_model_t* t);
+void gl_bind_material(const ms3d_model_t* t, int materialIndex);
+void gl_render(const ms3d_model_t* t, bool withMaterial, bool flatShaded);
+void gl_render_joints(const ms3d_model_t* t, int what);
+
+class ModelRender
+{
+private:
+    ms3d_model_t* m_model;
+    string m_modelName;
+    float m_frame;
+    long m_clock;
+public:
+    ModelRender();
+    ~ModelRender();
+
+    float getFrameSecond();
+    void loadModel(const char* filename);
+
+    void renderModel();
+    void renderJoints();
+
+};
+
 };
 
 #endif // __MS3D_LOADER_H__

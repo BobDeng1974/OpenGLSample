@@ -1,6 +1,10 @@
 #include "ms3dloader.h"
 #include "mathlib.h"
 
+#include "texture.h"
+
+#include <time.h>
+#include <assert.h>
 
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -453,6 +457,26 @@ void dump_ms3d_file(ms3d_model_t* t, const char* file)
     }
 }
 
+
+//======================================================
+//
+unsigned int load_gl_tga(const char* file)
+{
+    Texture texture;
+    texture.texID = 0;
+    if (LoadTGA(&texture, "Data/ms.tga"))
+    {
+        glGenTextures(1, &texture.texID);
+        glBindTexture(GL_TEXTURE_2D, texture.texID);
+        glTexImage2D(GL_TEXTURE_2D, 0, texture.bpp / 8, texture.width, texture.height, 0, texture.type, GL_UNSIGNED_BYTE, texture.data);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+        if (texture.data)
+            free(texture.data);
+    }
+    return texture.texID;
+}
+
 //======================================================
 //
 int find_joint_by_name(ms3d_model_t* t, const char *name)
@@ -845,10 +869,20 @@ void fill_joint_indices_and_weights(const ms3d_vertex_t *vertex, int jointIndice
     }
 }
 
+//======================================================
+//
+bool gl_load_material(ms3d_model_t* t)
+{
+    for (int i = 0; i < t->nNumMaterials; ++i)
+    {
+        ms3d_material_t* mt = &t->materials[i];
+        mt->id = (unsigned char)load_gl_tga(mt->texture);
+    }
+}
 
 //======================================================
 //
-void bind_material(const ms3d_model_t* t, int materialIndex)
+void gl_bind_material(const ms3d_model_t* t, int materialIndex)
 {
 if (materialIndex < 0 || materialIndex >= t->nNumMaterials)
 	{
@@ -927,7 +961,7 @@ if (materialIndex < 0 || materialIndex >= t->nNumMaterials)
 
 //======================================================
 //
-void render_gl(const ms3d_model_t* t, bool withMaterial, bool flatShaded)
+void gl_render(const ms3d_model_t* t, bool withMaterial, bool flatShaded)
 {
     int numGroups = t->nNumGroups;
 	for (int i = 0; i < numGroups; i++)
@@ -935,9 +969,9 @@ void render_gl(const ms3d_model_t* t, bool withMaterial, bool flatShaded)
 		const ms3d_group_t *group = &t->groups[i];
 
 		if (withMaterial)
-            bind_material(t, group->materialIndex);
+            gl_bind_material(t, group->materialIndex);
 		else
-			bind_material(t, -1);
+			gl_bind_material(t, -1);
 
 		glBegin(GL_TRIANGLES);
 		for (size_t j = 0; j < group->numtriangles; j++)
@@ -967,7 +1001,7 @@ void render_gl(const ms3d_model_t* t, bool withMaterial, bool flatShaded)
 
 //======================================================
 //
-void render_joints(const ms3d_model_t* t, int what)
+void gl_render_joints(const ms3d_model_t* t, int what)
 {
     if (what == eJointLines)
 	{
@@ -1000,6 +1034,53 @@ void render_joints(const ms3d_model_t* t, int what)
 		glEnd();
 	}
 }
+
+ModelRender::ModelRender()
+    :m_modelName(""), m_model(NULL), m_frame(0.0f), m_clock(0)
+{
+
+}
+ModelRender::~ModelRender()
+{
+    if (m_model)
+        delete_ms3d_model(m_model);
+    m_model = NULL;
+}
+
+float ModelRender::getFrameSecond()
+{
+    long t = clock();
+    return (float)(t - m_clock)/1000000.0;
+}
+
+void ModelRender::loadModel(const char* filename)
+{
+    assert(m_model == NULL);
+    m_model = create_ms3d_model();
+    m_modelName = filename;
+    load_ms3d_file(m_model, filename);
+    gl_load_material(m_model);
+
+    m_clock = clock();
+
+    setup_joints(m_model);
+    set_frame(m_model, -1);
+}
+
+void ModelRender::renderModel()
+{
+    m_frame += getFrameSecond();
+    if (m_frame > m_model->iTotalFrames)
+        m_frame = 0;
+    set_frame(m_model, m_frame);
+    gl_render(m_model, true, true);
+}
+
+void ModelRender::renderJoints()
+{
+    gl_render_joints(m_model, eJointLines);
+}
+
 };
 
 
