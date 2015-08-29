@@ -184,7 +184,7 @@ typedef struct {
 */
 
 
-namespace Ms3d_Space
+namespace ms3d_space
 {
 // max values
 #define MAX_VERTICES    8192

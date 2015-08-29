@@ -10,7 +10,7 @@
 #include <GL/glu.h>
 
 
-namespace Ms3d_Space
+namespace ms3d_space
 {
 
 //======================================================
@@ -76,6 +76,7 @@ void delete_ms3d_model(ms3d_model_t* t)
     {
         delete[] t->comment;
     }
+    delete t;
 }
 
 //======================================================

@@ -335,13 +335,27 @@ int main1(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
+
+#include "fntloader.h"
 #include "ms3dloader.h"
 
 int main(int argc, char *argv[])
 {
-    using namespace Ms3d_Space;
+#if 0
+
+    using namespace ms3d_space;
     ms3d_model_t* model = create_ms3d_model();
     load_ms3d_file(model, "Data/tin_open_lay.ms3d");
     dump_ms3d_file(model, "Data/tin_open_lay.log");
     delete_ms3d_model(model);
+#endif // 0
+
+#if 1
+    using namespace fnt_space;
+    FntFile file;
+    file.dump();
+    //file.loadFntFile("Data/fnt_arialx.fnt");
+#endif // 1
+
 }
+
