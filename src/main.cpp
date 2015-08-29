@@ -353,8 +353,9 @@ int main(int argc, char *argv[])
 #if 1
     using namespace fnt_space;
     FntFile file;
-    file.dump();
-    //file.loadFntFile("Data/fnt_arialx.fnt");
+    //file.dump();
+    file.loadFntFile("Data/fnt_arial.fnt");
+    int k = 0;
 #endif // 1
 
 }

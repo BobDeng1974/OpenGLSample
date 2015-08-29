@@ -39,6 +39,7 @@ struct fnt_common_t
     char packed;
     char alphaChnl;
     char redChnl;
+    char greenChnl;
     char blueChnl;
 };
 
