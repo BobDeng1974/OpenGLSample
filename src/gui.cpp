@@ -6,7 +6,7 @@
 namespace Simple
 {
     const unsigned int TRANGLES_MAX_NUM = 5000;
-    struct tmp_render_buffer_t
+    struct tmp_graphic_buffer_t
     {
         unsigned int num;           // num of vertex
         unsigned int tex;
@@ -19,36 +19,36 @@ namespace Simple
         unsigned int indexs[TRANGLES_MAX_NUM * 3];
     };
 
-    tmp_render_buffer_t T;
+    tmp_graphic_buffer_t T;
 
-    render_buffer_t* create_rd_buffer()
+    graphic_buffer_t* create_rd_buffer()
     {
-        render_buffer_t* p = new render_buffer_t;
-        memset(p, 0, sizeof(render_buffer_t));
+        graphic_buffer_t* p = new graphic_buffer_t;
+        memset(p, 0, sizeof(graphic_buffer_t));
         return p;
     }
 
-    void rd_bind_texture(unsigned int texturId)
+    void gpc_bind_texture(unsigned int texturId)
     {
         T.tex = texturId;
     }
-    unsigned int rd_get_index()
+    unsigned int gpc_get_index()
     {
         return T.num;
     }
-    void rd_push_vertex(float x, float y, float z)
+    void gpc_push_vertex(float x, float y, float z)
     {
         T.vertexs[T.num][0] = x;
         T.vertexs[T.num][1] = y;
         T.vertexs[T.num][2] = z;
     }
-    void rd_push_uv(float u, float v)
+    void gpc_push_uv(float u, float v)
     {
         T.uvs[T.num][0] = u;
         T.uvs[T.num][1] = v;
     }
 
-    void rd_push_color(float r, float g, float b)
+    void gpc_push_color(float r, float g, float b)
     {
         T.colors[T.num][0] = r;
         T.colors[T.num][1] = g;
@@ -62,7 +62,7 @@ namespace Simple
         T.normals[T.num][2] = z;
     }
 
-    void rd_push_trangles_index(int v0, int v1, int v2)
+    void gpc_push_trangles_index(int v0, int v1, int v2)
     {
         T.indexs[T.num * 3] = v0;
         T.indexs[T.num * 3 + 1] = v1;
@@ -70,12 +70,12 @@ namespace Simple
         T.num_trangles ++;
     }
 
-    void rd_push_next()
+    void gpc_push_next()
     {
         T.num ++;
     }
 
-    void rd_end_buff(render_buffer_t* t)
+    void gpc_end_buff(graphic_buffer_t* t)
     {
         t->num_trangles = T.num_trangles;
 
@@ -94,7 +94,7 @@ namespace Simple
         memcpy(t->indexs, T.indexs, sizeof(unsigned int) * T.num_trangles);
     }
 
-    void rd_render(render_buffer_t* t)
+    void gpc_render(graphic_buffer_t* t)
     {
         glBindTexture(GL_TEXTURE_2D, t->tex);
 
@@ -113,7 +113,7 @@ namespace Simple
         glDisableClientState(GL_COLOR_ARRAY);
     }
 
-    void delete_rd_buffer(render_buffer_t* t)
+    void delete_gpc_buffer(graphic_buffer_t* t)
     {
         if (t->vertexs)
             delete[] t->vertexs;

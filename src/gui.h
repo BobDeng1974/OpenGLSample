@@ -15,7 +15,7 @@ namespace Simple
     typedef float[3] vec3_t;
     typedef float[2] vec2_t;
 
-    struct render_buffer_t
+    struct graphic_buffer_t
     {
         unsigned int tex;
         vec3_t* vertexs;
@@ -27,19 +27,21 @@ namespace Simple
         unsigned int* indexs;
     };
 
-    render_buffer_t* create_rd_buffer();
-    void rd_bind_texture(unsigned int texturId);
+    graphic_buffer_t* create_rd_buffer();
+    void gpc_bind_texture(unsigned int texturId);
     unsigned int rd_get_index();
-    void rd_push_vertex(float x, float y, float z);
-    void rd_push_uv(float u, float v);
-    void rd_push_color(float r, float g, float b);
-    void rd_push_normal(float x, float y, float z);
-    void rd_push_trangles_index(int v0, int v1, int v2);
-    void rd_push_next();
-    void rd_end_buff(render_buffer_t* t);
+    void gpc_push_vertex(float x, float y, float z);
+    void gpc_push_uv(float u, float v);
+    void gpc_push_color(float r, float g, float b);
+    void gpc_push_normal(float x, float y, float z);
+    void gpc_push_trangles_index(int v0, int v1, int v2);
+    void gpc_push_next();
+    void gpc_end_buff(graphic_buffer_t* t);
 
-    void rd_render(render_buffer_t* t);
-    void delete_rd_buffer(render_buffer_t* t);
+    void gpc_render(graphic_buffer_t* t);
+    void delete_gpc_buffer(graphic_buffer_t* t);
+
+
 
 
     // base function
