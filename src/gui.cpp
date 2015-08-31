@@ -5,6 +5,131 @@
 
 namespace Simple
 {
+    const unsigned int TRANGLES_MAX_NUM = 5000;
+    struct tmp_render_buffer_t
+    {
+        unsigned int num;           // num of vertex
+        unsigned int tex;
+        vec3_t vertexs[TRANGLES_MAX_NUM  * 3];
+        vec2_t uvs[TRANGLES_MAX_NUM * 3];
+        vec3_t normals[TRANGLES_MAX_NUM * 3];
+        vec3_t colors[TRANGLES_MAX_NUM * 3];
+
+        unsigned int num_trangles;
+        unsigned int indexs[TRANGLES_MAX_NUM * 3];
+    };
+
+    tmp_render_buffer_t T;
+
+    render_buffer_t* create_rd_buffer()
+    {
+        render_buffer_t* p = new render_buffer_t;
+        memset(p, 0, sizeof(render_buffer_t));
+        return p;
+    }
+
+    void rd_bind_texture(unsigned int texturId)
+    {
+        T.tex = texturId;
+    }
+    unsigned int rd_get_index()
+    {
+        return T.num;
+    }
+    void rd_push_vertex(float x, float y, float z)
+    {
+        T.vertexs[T.num][0] = x;
+        T.vertexs[T.num][1] = y;
+        T.vertexs[T.num][2] = z;
+    }
+    void rd_push_uv(float u, float v)
+    {
+        T.uvs[T.num][0] = u;
+        T.uvs[T.num][1] = v;
+    }
+
+    void rd_push_color(float r, float g, float b)
+    {
+        T.colors[T.num][0] = r;
+        T.colors[T.num][1] = g;
+        T.colors[T.num][2] = b;
+    }
+
+    void rd_push_normal(float x, float y, float z)
+    {
+        T.normals[T.num][0] = x;
+        T.normals[T.num][1] = y;
+        T.normals[T.num][2] = z;
+    }
+
+    void rd_push_trangles_index(int v0, int v1, int v2)
+    {
+        T.indexs[T.num * 3] = v0;
+        T.indexs[T.num * 3 + 1] = v1;
+        T.indexs[T.num * 3 + 2] = v2;
+        T.num_trangles ++;
+    }
+
+    void rd_push_next()
+    {
+        T.num ++;
+    }
+
+    void rd_end_buff(render_buffer_t* t)
+    {
+        t->num_trangles = T.num_trangles;
+
+        t->vertexs = new vec3_t[T.num];
+        t->uvs = new vec2_t[T.num];
+        t->normals = new vec3_t[T.num];
+        t->colors = new vec3_t[T.num];
+
+        t->indexs = new unsigned int[T.num_trangles];
+
+        memcpy(t->vertexs, T.vertexs, sizeof(vec3_t) * T.num);
+        memcpy(t->uvs, T.uvs, sizeof(vec2_t) * T.num);
+        memcpy(t->normals, T.normals, sizeof(vec3_t) * T.num);
+        memcpy(t->colors, T.colors, sizeof(vec3_t) * T.num);
+
+        memcpy(t->indexs, T.indexs, sizeof(unsigned int) * T.num_trangles);
+    }
+
+    void rd_render(render_buffer_t* t)
+    {
+        glBindTexture(GL_TEXTURE_2D, t->tex);
+
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, t->vertexs);
+
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLAT, 0, t->uvs);
+
+        glEnableClientState(GL_COLOR_ARRAY);
+        glColorPointer(3, GL_FLOAT, 0, t->colors);
+
+        glDrawElements(GL_QUADS, t->num_trangles * 3, GL_UNSIGNED_INT, t->vertexs);
+
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_COLOR_ARRAY);
+    }
+
+    void delete_rd_buffer(render_buffer_t* t)
+    {
+        if (t->vertexs)
+            delete[] t->vertexs;
+        if (t->uvs)
+            delete[] t->uvs;
+        if (t->normals)
+            delete[] t->normals;
+        if (t->colors)
+            delete[] t->colors;
+        if (t->indexs)
+            delete[] t->indexs;
+        delete t;
+    }
+
+
+    GLint g_gui_texture_id = -1;
     GLint g_gui_width = 1;
     GLint g_gui_height = 1;
     GLfloat g_gui_ar = 1;
@@ -119,7 +244,12 @@ namespace Simple
         g_gui_half_width = w / 2.0;
         g_gui_half_height = h / 2.0;
     }
-
+    //===========================================================
+    //
+    void rdBind(unsigned int textureId)
+    {
+        g_gui_texture_id = textureId;
+    }
     //===========================================================
     //
     void rdAddRectangle(float x, float y, float w, float h, float u0, float v0, float u1, float v1, float r, float g, float b)

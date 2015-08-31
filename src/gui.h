@@ -12,9 +12,39 @@ using namespace std;
 
 namespace Simple
 {
+    typedef float[3] vec3_t;
+    typedef float[2] vec2_t;
+
+    struct render_buffer_t
+    {
+        unsigned int tex;
+        vec3_t* vertexs;
+        vec2_t* uvs;
+        vec3_t* normals;
+        vec3_t* colors;
+
+        unsigned int num_trangles; // num of trangles
+        unsigned int* indexs;
+    };
+
+    render_buffer_t* create_rd_buffer();
+    void rd_bind_texture(unsigned int texturId);
+    unsigned int rd_get_index();
+    void rd_push_vertex(float x, float y, float z);
+    void rd_push_uv(float u, float v);
+    void rd_push_color(float r, float g, float b);
+    void rd_push_normal(float x, float y, float z);
+    void rd_push_trangles_index(int v0, int v1, int v2);
+    void rd_push_next();
+    void rd_end_buff(render_buffer_t* t);
+
+    void rd_render(render_buffer_t* t);
+    void delete_rd_buffer(render_buffer_t* t);
+
 
     // base function
     void rdSetView(float w, float h);
+    void rdBind(unsigned int textureId);
     void rdAddRectangle(float x, float y, float w, float h, float u0, float v0, float u1, float v1, float r = 1.0f, float g = 1.0f, float b = 1.0f);
     void rdUpdate();
 
@@ -23,6 +53,8 @@ namespace Simple
     void rdEnd();
 
     void rdFrameQueue();
+
+    void rd
 
 
     // 最基础的UI,这里不使用纹理来进行直接使用颜色
