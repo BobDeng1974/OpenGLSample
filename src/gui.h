@@ -42,7 +42,27 @@ namespace Simple
     void delete_gpc_buffer(graphic_buffer_t* t);
 
 
+    class Graphic
+    {
+    public:
+        Graphic();
+        ~Graphic();
 
+        void bindtextrue(unsigned int tex);
+        void vertex(float x, float y, float z);
+        void uv(float u, float v);
+        void color(float r, float g, float b);
+        void normal(float x, float y, float z);
+        void index(int v0, int v1, int v2);
+        void next_vertex();
+
+        void finish();
+
+        void draw();
+
+    private:
+        vector<graphic_buffer_t*> mGraphics;
+    };
 
     // base function
     void rdSetView(float w, float h);
@@ -55,8 +75,6 @@ namespace Simple
     void rdEnd();
 
     void rdFrameQueue();
-
-    void rd
 
 
     // 最基础的UI,这里不使用纹理来进行直接使用颜色
