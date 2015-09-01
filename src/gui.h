@@ -48,6 +48,7 @@ namespace Simple
         Graphic();
         ~Graphic();
 
+        void setView(float w, float h);
         void bindtextrue(unsigned int tex);
         void vertex(float x, float y, float z);
         void uv(float u, float v);
@@ -58,24 +59,18 @@ namespace Simple
 
         void finish();
 
+        void beginDraw();
         void draw();
+        void endDraw();
+
+        void render();
 
     private:
         vector<graphic_buffer_t*> mGraphics;
+        float mWidth,mHeight;
     };
 
-    // base function
-    void rdSetView(float w, float h);
-    void rdBind(unsigned int textureId);
-    void rdAddRectangle(float x, float y, float w, float h, float u0, float v0, float u1, float v1, float r = 1.0f, float g = 1.0f, float b = 1.0f);
-    void rdUpdate();
-
-    void rdBegin();
-    void rdRender();
-    void rdEnd();
-
-    void rdFrameQueue();
-
+    extern Graphic graphic;
 
     // 最基础的UI,这里不使用纹理来进行直接使用颜色
     class rdPoint

@@ -5,8 +5,10 @@
 
 namespace Simple
 {
+    std::vector<Window*> renderWins;
+
     const unsigned int TRANGLES_MAX_NUM = 5000;
-    struct tmp_graphic_buffer_t
+    struct st_graphic_buffer_t
     {
         unsigned int num;           // num of vertex
         unsigned int tex;
@@ -19,8 +21,10 @@ namespace Simple
         unsigned int indexs[TRANGLES_MAX_NUM * 3];
     };
 
-    tmp_graphic_buffer_t T;
+    st_graphic_buffer_t T;
 
+    //===========================================================
+    //
     graphic_buffer_t* create_rd_buffer()
     {
         graphic_buffer_t* p = new graphic_buffer_t;
@@ -28,20 +32,31 @@ namespace Simple
         return p;
     }
 
+    //===========================================================
+    //
     void gpc_bind_texture(unsigned int texturId)
     {
         T.tex = texturId;
     }
+
+    //===========================================================
+    //
     unsigned int gpc_get_index()
     {
         return T.num;
     }
+
+    //===========================================================
+    //
     void gpc_push_vertex(float x, float y, float z)
     {
         T.vertexs[T.num][0] = x;
         T.vertexs[T.num][1] = y;
         T.vertexs[T.num][2] = z;
     }
+
+    //===========================================================
+    //
     void gpc_push_uv(float u, float v)
     {
         T.uvs[T.num][0] = u;
@@ -55,6 +70,8 @@ namespace Simple
         T.colors[T.num][2] = b;
     }
 
+    //===========================================================
+    //
     void rd_push_normal(float x, float y, float z)
     {
         T.normals[T.num][0] = x;
@@ -62,6 +79,8 @@ namespace Simple
         T.normals[T.num][2] = z;
     }
 
+    //===========================================================
+    //
     void gpc_push_trangles_index(int v0, int v1, int v2)
     {
         T.indexs[T.num * 3] = v0;
@@ -70,11 +89,16 @@ namespace Simple
         T.num_trangles ++;
     }
 
+    //===========================================================
+    //
     void gpc_push_next()
     {
         T.num ++;
+        assert(T.num < (TRANGLES_MAX_NUM * 3));
     }
 
+    //===========================================================
+    //
     void gpc_end_buff(graphic_buffer_t* t)
     {
         t->num_trangles = T.num_trangles;
@@ -94,6 +118,8 @@ namespace Simple
         memcpy(t->indexs, T.indexs, sizeof(unsigned int) * T.num_trangles);
     }
 
+    //===========================================================
+    //
     void gpc_render(graphic_buffer_t* t)
     {
         glBindTexture(GL_TEXTURE_2D, t->tex);
@@ -113,6 +139,8 @@ namespace Simple
         glDisableClientState(GL_COLOR_ARRAY);
     }
 
+    //===========================================================
+    //
     void delete_gpc_buffer(graphic_buffer_t* t)
     {
         if (t->vertexs)
@@ -129,21 +157,160 @@ namespace Simple
     }
 
 
-    GLint g_gui_texture_id = -1;
-    GLint g_gui_width = 1;
-    GLint g_gui_height = 1;
-    GLfloat g_gui_ar = 1;
-    GLfloat g_gui_half_width = 1;
-    GLfloat g_gui_half_height = 1;
+    //===========================================================
+    //
+    Graphic::Graphic() {}
 
-    const int MAX_QUAD = 1000;
-    GLint g_gui_num = 0;
-    GLfloat g_gui_vertexs[MAX_QUAD * 4 * 3];
-    GLfloat g_gui_uvs[MAX_QUAD * 4 * 2];
-    GLfloat g_gui_colors[MAX_QUAD * 4 * 3];
-    GLint g_gui_indices[MAX_QUAD * 4];
+    //===========================================================
+    //
+    Graphic::~Graphic()
+    {
+        vector<graphic_buffer_t*>::iterator i = mGraphics.begin();
+        for (; i != mGraphics.end(); ++i)
+            delete_gpc_buffer(*i);
+        mGraphics.clear();
+    }
 
-    std::vector<Window*> renderWins;
+    //===========================================================
+    //
+    void Graphic::setView(float w, float h)
+    {
+        mWidth = w;
+        mHeight = h;
+    }
+
+    //===========================================================
+    //
+    void Graphic::bindtextrue(unsigned int tex)
+    {
+        gpc_bind_texture(tex);
+    }
+
+    //===========================================================
+    //
+    void Graphic::vertex(float x, float y, float z)
+    {
+        gpc_push_vertex(x, y, z);
+    }
+
+    //===========================================================
+    //
+    void Graphic::uv(float u, float v)
+    {
+        gpc_push_uv(u, v);
+    }
+
+    //===========================================================
+    //
+    void Graphic::color(float r, float g, float b)
+    {
+        gpc_push_color(r, g, b);
+    }
+
+    //===========================================================
+    //
+    void Graphic::normal(float x, float y, float z)
+    {
+        gpc_push_normal(x, y, z);
+    }
+
+    //===========================================================
+    //
+    void Graphic::index(int v0, int v1, int v2)
+    {
+        gpc_get_index(v0, v1, v2);
+    }
+
+    //===========================================================
+    //
+    void Graphic::next_vertex()
+    {
+        gpc_push_next();
+    }
+
+    //===========================================================
+    //
+    void Graphic::finish()
+    {
+        graphic_buffer_t* t = new graphic_buffer_t;
+        gpc_end_buff(t);
+        mGraphics.push_back(t);
+    }
+
+    //===========================================================
+    //
+    void Graphic::beginDraw()
+    {
+        //save current attributes
+		glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+		glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+		glPolygonMode(GL_FRONT, GL_FILL);
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+
+        float mHalfWidth = mWidth / 2;
+        float mHalfHeight = mHeight / 2;
+		//glOrtho(-g_gui_half_width * g_gui_ar, g_gui_half_width * g_gui_ar, -g_gui_half_height, g_gui_half_height, -1, 1);
+		glOrtho(-mHalfWidth, mHalfWidth, -mHalfHeight, mHalfHeight, -1, 1);
+
+		//glOrtho(-1, 1, -1, 1, -1, 1);
+
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glDisable(GL_LIGHTING);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_FOG);
+		glDisable(GL_TEXTURE_GEN_S);
+		glDisable(GL_TEXTURE_GEN_T);
+		glDisable(GL_TEXTURE_GEN_R);
+
+		//glFrontFace(GL_CW);
+		//glCullFace(GL_BACK);
+		//glEnable(GL_CULL_FACE);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glEnable(GL_TEXTURE_2D);
+    }
+
+    //===========================================================
+    //
+    void Graphic::draw()
+    {
+        vector<graphic_buffer_t*>::iterator i = mGraphics.begin();
+        for (; i != mGraphics.end(); ++i)
+            gpc_render((*i));
+    }
+
+    //===========================================================
+    //
+    void Graphic::endDraw()
+    {
+        glPopMatrix();
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+
+		//restore former attributes
+		glPopAttrib();
+		glPopClientAttrib();
+    }
+
+    //===========================================================
+    //
+    void Graphic::render()
+    {
+        beginDraw();
+        draw();
+        endDraw();
+    }
+
 
     //===========================================================
     //
@@ -232,130 +399,6 @@ namespace Simple
         g_gui_colors[ii + 9] = r;
         g_gui_colors[ii + 10] = g;
         g_gui_colors[ii + 11] = b;
-    }
-
-    //===========================================================
-    //
-    void rdSetView(float w, float h)
-    {
-        g_gui_width = w;
-        g_gui_height = h;
-        g_gui_ar = (float) w / (float) h;
-        g_gui_half_width = w / 2.0;
-        g_gui_half_height = h / 2.0;
-    }
-    //===========================================================
-    //
-    void rdBind(unsigned int textureId)
-    {
-        g_gui_texture_id = textureId;
-    }
-    //===========================================================
-    //
-    void rdAddRectangle(float x, float y, float w, float h, float u0, float v0, float u1, float v1, float r, float g, float b)
-    {
-        assert(g_gui_num < MAX_QUAD);
-        store_rect(g_gui_num, x, y, w, h);
-        store_uv(g_gui_num, u0, v0, u1, v1);
-        store_indice(g_gui_num);
-        store_color(g_gui_num, r, g, b);
-        g_gui_num++;
-    }
-
-    //===========================================================
-    //
-    void rdUpdate()
-    {
-        std::vector<Window*>::iterator i = renderWins.begin();
-            for (; i != renderWins.end(); ++i)
-                (*i)->draw();
-    }
-
-    //===========================================================
-    //
-    void rdBegin()
-    {
-        //save current attributes
-		glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
-		glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-		glPolygonMode(GL_FRONT, GL_FILL);
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-
-		//glOrtho(-g_gui_half_width * g_gui_ar, g_gui_half_width * g_gui_ar, -g_gui_half_height, g_gui_half_height, -1, 1);
-		glOrtho(-g_gui_half_width, g_gui_half_width, -g_gui_half_height, g_gui_half_height, -1, 1);
-
-		//glOrtho(-1, 1, -1, 1, -1, 1);
-
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-
-		glDisable(GL_LIGHTING);
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_FOG);
-		glDisable(GL_TEXTURE_GEN_S);
-		glDisable(GL_TEXTURE_GEN_T);
-		glDisable(GL_TEXTURE_GEN_R);
-
-		//glFrontFace(GL_CW);
-		//glCullFace(GL_BACK);
-		//glEnable(GL_CULL_FACE);
-
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glEnable(GL_TEXTURE_2D);
-    }
-
-    //===========================================================
-    //
-    void rdRender()
-    {
-        if (g_gui_num > 0)
-        {
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glVertexPointer(3, GL_FLOAT, 0, g_gui_vertexs);
-
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glTexCoordPointer(2, GL_FLAT, 0, g_gui_uvs);
-
-            glEnableClientState(GL_COLOR_ARRAY);
-            glColorPointer(3, GL_FLOAT, 0, g_gui_colors);
-
-            glDrawElements(GL_QUADS, g_gui_num * 4, GL_UNSIGNED_INT, g_gui_indices);
-
-            glDisableClientState(GL_VERTEX_ARRAY);
-            glDisableClientState(GL_COLOR_ARRAY);
-        }
-        g_gui_num = 0;
-    }
-
-    //===========================================================
-    //
-    void rdEnd()
-    {
-        glPopMatrix();
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
-
-		//restore former attributes
-		glPopAttrib();
-		glPopClientAttrib();
-    }
-
-    //===========================================================
-    //
-    void rdFrameQueue()
-    {
-        rdUpdate();
-        rdBegin();
-        rdRender();
-        rdEnd();
     }
 
     //===========================================================
