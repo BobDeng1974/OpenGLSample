@@ -1,11 +1,15 @@
 #include "gui.h"
 #include "assert.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 namespace Simple
 {
+
     std::vector<Window*> renderWins;
+    Graphic* gp = new Graphic;
 
     const unsigned int TRANGLES_MAX_NUM = 5000;
     struct st_graphic_buffer_t
@@ -38,7 +42,12 @@ namespace Simple
     {
         T.tex = texturId;
     }
-
+    //===========================================================
+    //
+    unsigned int gpc_get_texture_id()
+    {
+        return T.tex;
+    }
     //===========================================================
     //
     unsigned int gpc_get_index()
@@ -72,7 +81,7 @@ namespace Simple
 
     //===========================================================
     //
-    void rd_push_normal(float x, float y, float z)
+    void gpc_push_normal(float x, float y, float z)
     {
         T.normals[T.num][0] = x;
         T.normals[T.num][1] = y;
@@ -159,7 +168,10 @@ namespace Simple
 
     //===========================================================
     //
-    Graphic::Graphic() {}
+    Graphic::Graphic()
+    {
+
+    }
 
     //===========================================================
     //
@@ -183,7 +195,17 @@ namespace Simple
     //
     void Graphic::bindtextrue(unsigned int tex)
     {
+        if (gpc_get_texture_id() > 0 && gpc_get_texture_id() != tex)
+            finish();
+
         gpc_bind_texture(tex);
+    }
+
+    //===========================================================
+    //
+    unsigned int Graphic::getVertexIndex()
+    {
+        return gpc_get_index();
     }
 
     //===========================================================
@@ -218,7 +240,7 @@ namespace Simple
     //
     void Graphic::index(int v0, int v1, int v2)
     {
-        gpc_get_index(v0, v1, v2);
+        gpc_push_trangles_index(v0, v1, v2);
     }
 
     //===========================================================
@@ -310,97 +332,6 @@ namespace Simple
         draw();
         endDraw();
     }
-
-
-    //===========================================================
-    //
-    inline int check_to_x(int x)
-    {
-        return x - g_gui_half_width;
-    }
-
-    //===========================================================
-    //
-    inline int check_to_y(int y)
-    {
-        return g_gui_half_height - y;
-    }
-
-    //===========================================================
-    //
-    inline void store_rect(int i, float x, float y, float w, float h)
-    {
-        // 4 vertex
-        // vertex 1
-        int ii = i * 12;
-        g_gui_vertexs[ii] = x;
-        g_gui_vertexs[ii + 1] = y;
-        g_gui_vertexs[ii + 2] = 0;
-        // vertex 2
-        g_gui_vertexs[ii + 3] = x + w;
-        g_gui_vertexs[ii + 4] = y;
-        g_gui_vertexs[ii + 5] = 0;
-        // vertex 3
-        g_gui_vertexs[ii + 6] = x + w;
-        g_gui_vertexs[ii + 7] = y + h;
-        g_gui_vertexs[ii + 8] = 0;
-        // vertex 4
-        g_gui_vertexs[ii + 9] = x;
-        g_gui_vertexs[ii + 10] = y + h;
-        g_gui_vertexs[ii + 11] = 0;
-    }
-
-    //===========================================================
-    //
-    inline void store_uv(int i, float u0, float v0, float u1, float v1)
-    {
-        int ii = i * 8;
-        g_gui_uvs[ii] = u0;
-        g_gui_uvs[ii + 1] = v0;
-
-        g_gui_uvs[ii + 2] = u1;
-        g_gui_uvs[ii + 3] = v0;
-
-        g_gui_uvs[ii + 4] = u1;
-        g_gui_uvs[ii + 5] = v1;
-
-        g_gui_uvs[ii + 6] = u0;
-        g_gui_uvs[ii + 7] = v1;
-    }
-
-    //===========================================================
-    //
-    inline void store_indice(int i)
-    {
-        int ii = i * 4;
-        g_gui_indices[ii] = ii;
-        g_gui_indices[ii + 1] = ii + 1;
-        g_gui_indices[ii + 2] = ii + 2;
-        g_gui_indices[ii + 3] = ii + 3;
-    }
-
-    //===========================================================
-    //
-    inline void store_color(int i, float r, float g, float b)
-    {
-        int ii = i * 12;
-        g_gui_colors[ii] = r;
-        g_gui_colors[ii + 1] = g;
-        g_gui_colors[ii + 2] = b;
-
-        g_gui_colors[ii + 3] = r;
-        g_gui_colors[ii + 4] = g;
-        g_gui_colors[ii + 5] = b;
-
-        g_gui_colors[ii + 6] = r;
-        g_gui_colors[ii + 7] = g;
-        g_gui_colors[ii + 8] = b;
-
-        g_gui_colors[ii + 9] = r;
-        g_gui_colors[ii + 10] = g;
-        g_gui_colors[ii + 11] = b;
-    }
-
     //===========================================================
     //
     Window::Window()
@@ -509,14 +440,52 @@ namespace Simple
     //
     void Window::draw(float x, float y)
     {
-        rdRect &r = mRect;
+        rdTexture &t = mTexture;
         rdPoint &p = mPosition;
-        rdSize &s = mrdSize;
-        rdColor &c = mColor;
-        rdAddRectangle(p.x + x, p.y + y, s.w, s.h, r.x, r.y, r.x + r.w, r.y + r.h, c.r, c.g, c.b);
+        if (t.tex > 0)
+        {
+            rdSize &s = mrdSize;
+            rdColor &c = mColor;
+
+            unsigned int idx = gp->getVertexIndex();
+
+            gp->bindtextrue(t.tex);
+
+            // 1
+            gp->vertex(p.x + x, p.y + y, 0);
+            gp->color(c.r, c.g, c.b);
+            gp->uv(t.u0, t.v0);
+            gp->normal(0, 0, 1);
+            gp->next_vertex();
+
+            // 2
+            gp->vertex(p.x + x + s.w, p.y + y, 0);
+            gp->color(c.r, c.g, c.b);
+            gp->uv(t.u1, t.v0);
+            gp->normal(0, 0, 1);
+            gp->next_vertex();
+
+            // 3
+            gp->vertex(p.x + x + s.w, p.y + y + s.h, 0);
+            gp->color(c.r, c.g, c.b);
+            gp->uv(t.u1, t.v1);
+            gp->normal(0, 0, 1);
+            gp->next_vertex();
+
+            // 4
+            gp->vertex(p.x + x, p.y + y + s.h, 0);
+            gp->color(c.r, c.g, c.b);
+            gp->uv(t.u0, t.v1);
+            gp->normal(0, 0, 1);
+            gp->next_vertex();
+
+            gp->index(idx, idx + 1, idx + 2);
+            gp->index(idx, idx + 2, idx + 3);
+        }
+
         std::vector<Window*>::iterator i = mChildren.begin();
         for (; i != mChildren.end(); ++i)
-            (*i)->draw(mPosition.x + x, mPosition.y + y);
+            (*i)->draw(p.x + x, p.y + y);
     }
 
     //===========================================================

@@ -9,11 +9,17 @@
 #include <assert.h>
 
 using namespace std;
+/**
+UI 这块，暂时这样写
+1. 纹理方面使用两张，一张是fnt文字,一张是UI使用的纹理
+2. 实现button, slider, label 三种UI
+
+*/
 
 namespace Simple
 {
-    typedef float[3] vec3_t;
-    typedef float[2] vec2_t;
+    typedef float vec3_t[3];
+    typedef float vec2_t[2];
 
     struct graphic_buffer_t
     {
@@ -29,7 +35,8 @@ namespace Simple
 
     graphic_buffer_t* create_rd_buffer();
     void gpc_bind_texture(unsigned int texturId);
-    unsigned int rd_get_index();
+    unsigned int gpc_get_texture_id();
+    unsigned int gpc_get_index();
     void gpc_push_vertex(float x, float y, float z);
     void gpc_push_uv(float u, float v);
     void gpc_push_color(float r, float g, float b);
@@ -50,6 +57,7 @@ namespace Simple
 
         void setView(float w, float h);
         void bindtextrue(unsigned int tex);
+        unsigned int getVertexIndex();
         void vertex(float x, float y, float z);
         void uv(float u, float v);
         void color(float r, float g, float b);
@@ -57,20 +65,18 @@ namespace Simple
         void index(int v0, int v1, int v2);
         void next_vertex();
 
-        void finish();
-
+        void finish(); // last one call this
+        void render();
+    protected:
         void beginDraw();
         void draw();
         void endDraw();
-
-        void render();
-
     private:
         vector<graphic_buffer_t*> mGraphics;
         float mWidth,mHeight;
     };
 
-    extern Graphic graphic;
+    extern Graphic *gp;
 
     // 最基础的UI,这里不使用纹理来进行直接使用颜色
     class rdPoint
@@ -115,9 +121,19 @@ namespace Simple
         float x, y, w, h;
     };
 
+    class rdTexture
+    {
+    public:
+        explicit rdTexture(): tex(0), u0(0.0f), u1(0.0f), v0(0.0f), v1(0.0f){}
+        rdTexture(unsigned int t, float ua, float ub, float va, float vb):tex(t), u0(ua), v0(va), u1(ub), v1(vb){}
+        float u0, v0, u1, v1;
+        unsigned int tex;
+    };
+
     typedef void (*Function0)();
     typedef void (*Function1)(float value);
 
+    //-------------------------------------------
     class Window
     {
     public:
@@ -128,10 +144,7 @@ namespace Simple
         void setName(const std::string& name) { mName = name; }
         const std::string getName(void) { return mName; }
 
-        void setUVS(float u0, float v0, float w, float h)
-        {
-            mRect.x = u0; mRect.y = v0; mRect.w = w; mRect.h = h;
-        }
+        void setTexture(const rdTexture& tex) { mTexture = tex; }
         void setPosition(const rdPoint &v) { mPosition = v; }
         void setrdSize(const rdSize &v) { mrdSize = v; }
         void setColor(const rdColor &c) { mColor = c; }
@@ -160,11 +173,11 @@ namespace Simple
         std::string mName;
         std::vector<Window*> mChildren;
 
-        rdRect mRect;
+        rdTexture mTexture;
 
         Window* mMouseDownWin;
     };
-
+    //-------------------------------------------
     class Button : public Window
     {
     public:
@@ -180,21 +193,21 @@ namespace Simple
     protected:
         Function0 mCallBack;
     };
-
+    //-------------------------------------------
     class Label : public Window
     {
     public:
-         explicit Label();
+        explicit Label();
         Label(const std::string& str);
         virtual void draw(float x = 0, float y = 0);
     protected:
         std::string mString;
     };
-
+    //-------------------------------------------
     class Slider : public Window
     {
     public:
-         explicit Slider();
+        explicit Slider();
         Slider(float x, float y, float w, float h);
 
         void setValue(float v) { mValue = v; }

@@ -1,4 +1,15 @@
 
+/**
+
+整体要实现的东东:
+0. 简单的OpenGL程序使用glfw来实现
+1. 简单GUI
+2. 简单骨骼动画ms3d, 《半条命》的骨骼动画
+
+
+
+*/
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
