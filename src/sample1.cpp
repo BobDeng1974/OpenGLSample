@@ -1,13 +1,8 @@
-
 /**
-
 整体要实现的东东:
 0. 简单的OpenGL程序使用glfw来实现
 1. 简单GUI
 2. 简单骨骼动画ms3d, 《半条命》的骨骼动画
-
-
-
 */
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -16,28 +11,14 @@
 #include <stdio.h>
 #include <string.h>
 
-// 设置灯光的颜色
-const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
-const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
-
-// 设置材质的颜色
-const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
-const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
-const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat high_shininess[] = { 100.0f };
-
 #pragma pack(push, 1)
-
 struct BitmapFileHeader
 {
-    unsigned short type;            //   位图文件的类型，必须为BM
-    unsigned long size;              //   位图文件的大小，以字节为单位
-    unsigned short reserved1;       //   位图文件保留字，必须为0
-    unsigned short reserved2;       //   位图文件保留字，必须为0
-    unsigned long offbits;         //   位图数据的起始位置，以相对于位图
-    //   文件头的偏移量表示，以字节为单位
+    unsigned short type;          //   位图文件的类型，必须为BM
+    unsigned long size;           //   位图文件的大小，以字节为单位
+    unsigned short reserved1;     //   位图文件保留字，必须为0
+    unsigned short reserved2;     //   位图文件保留字，必须为0
+    unsigned long offbits;       //   位图数据的起始位置，以相对于位图
 };
 
 struct BitmapInfoHeader
@@ -55,25 +36,20 @@ struct BitmapInfoHeader
     unsigned long clrimportant;  //   位图显示过程中重要的颜色数
 };
 
-struct BGR
-{
-    unsigned char blue;
-    unsigned char green;
-    unsigned char red;
-};
-
-struct RGB
-{
-    unsigned char red;
-    unsigned char blue;
-    unsigned char green;
-};
-
+struct RGB { unsigned char red, green, blue; };
 #pragma pack(pop)
+
+// 因为bmp图片的颜色顺序是b,g,r 所有要转化成r,g,b 交换r,b
+inline void SwapBGR2RGB(RGB& rgb)
+{
+    unsigned char t = rgb.red;
+    rgb.red = rgb.blue;
+    rgb.blue = t;
+}
 
 unsigned int LoadBitmap24(const char* filename)
 {
-    unsigned int tex = -1;
+    unsigned int tex = 0;
     FILE* fp = fopen(filename, "rb");
     if (!fp)
         return 0;
@@ -91,25 +67,19 @@ unsigned int LoadBitmap24(const char* filename)
     if (bitcount == 24)
     {
         int num = width * height;
-        BGR* buff = new BGR[num];
         fseek(fp, fileheader.offbits, SEEK_SET) ;
-        fread(buff, sizeof(BGR) * num, 1, fp);
-        RGB* img = new BGR[num];
-        for (int i = 0; i < num; ++i)
-        {
-            BGR* p1 = buff[i];
-            RGB* p2 = img[i];
-            p2.blue = p1.blue;
-            p2.red = p1.red;
-            p2.green = p1.green;
-        }
 
-        glBindTexture(GL_TEXTURE_2D, &tex);
+        RGB* img = new RGB[num];
+        fread(img, sizeof(RGB) * num, 1, fp);
+
+        for (int i = 0; i < num; ++i)
+            SwapBGR2RGB(img[i]);
+
+        glBindTexture(GL_TEXTURE_2D, tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Linear Min Filter
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Linear Mag Filter
-        glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &img.red);
+        glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &img->red);
 
-        delete[] buff;
         delete[] img;
     }
 
@@ -117,27 +87,6 @@ unsigned int LoadBitmap24(const char* filename)
     return tex;
 }
 
-//----------------------------------------------------------------------------
-//
-/*
-int LoadGLTextures()
-{
-    int Status = 0;
-    if (LoadTGA(&texture, "Data/ms.tga"))
-    {
-        glGenTextures(1, &texture.texID);
-        glBindTexture(GL_TEXTURE_2D, texture.texID);
-        glTexImage2D(GL_TEXTURE_2D, 0, texture.bpp / 8, texture.width, texture.height, 0, texture.type, GL_UNSIGNED_BYTE, texture.data);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-        if (texture.data)
-            free(texture.data);
-    }
-    return Status;
-}
-*/
-//----------------------------------------------------------------------------
-//
 GLchar* ReadShaderData1(const char* filename, GLsizei &sz)
 {
     FILE *fn = fopen(filename, "rb");
@@ -202,6 +151,8 @@ GLuint buildProgram1(const char*vsfn, const char* frfn)
     return program;
 }
 
+static void mouse_callback(GLFWwindow* window, int button, int action, int mods){}
+static void cursorpos_callback(GLFWwindow *window, double x, double y){}
 static void error_callback(int error, const char* description){fputs(description, stderr);}
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -209,8 +160,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-static void mouse_callback(GLFWwindow* window, int button, int action, int mods){}
-static void cursorpos_callback(GLFWwindow *window, double x, double y){}
 
 int main(int argc, char *argv[])
 {
@@ -225,9 +174,7 @@ int main(int argc, char *argv[])
     glfwSetCursorPosCallback(window, cursorpos_callback);
 
     //buildProgram("Data/shader.vert", "Data/shader.frag");
-    //LoadGLTextures();
-
-    LoadBitmap("Data/np.bmp");
+    GLuint tex = LoadBitmap24("Data/demo.bmp");
     glClearColor(0,0,0,1);      // 清理屏幕为黑色
     glEnable(GL_CULL_FACE);     // 启用面剔除
     glCullFace(GL_BACK);
@@ -245,19 +192,25 @@ int main(int argc, char *argv[])
     glAlphaFunc(GL_GREATER ,0.9);//0.5可以换成任何在0~1之间的数
     glShadeModel(GL_SMOOTH);
 
-    // 设置灯光
+    // 设置灯光的颜色
+    const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
+    const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+    const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
     glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);  // 设置环境光颜色
     glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);  // 设置漫反射的颜色
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);  // 设置镜面反射的颜色
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);  // 设置灯的位置
 
-    // 设置材质
+    // 设置材质的颜色
+    const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
+    const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
+    const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
+    const GLfloat high_shininess[] = { 100.0f };
     glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);   // 设置环境光颜色
     glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);   // 设置漫反射的颜色
     glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);  // 设置镜面反射的颜色
     glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);// 镜面指数 该值越小，表示材质越粗糙，点光源发射的光线照射到上面，也可以产生较大的亮点
-
-    //glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -275,16 +228,27 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glTranslatef(0.0f ,0.0f, -3.0f);
 
-        const GLfloat vers[] = { 0.0f,0.0f,0.0f, 25.0f,0.0f,0.0f, 30.0f,30.0f,0.0f, 0.0f,25.0f,0.0f, };
+        const GLfloat vers[] = { 0.0f,0.0f,0.0f, 1.0f,0.0f,0.0f, 1.0f,1.0f,0.0f, 0.0f,1.0f,0.0f, };
         const GLfloat cors[] = { 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, };
-        const GLint indices[] = {  0,1,2,3 };
+        const GLfloat nors[] = { 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f};
+        const GLfloat uvs[] = {0.0f,0.0f, 1.0f,0.0f, 1.0f,1.0f, 0.0f,1.0f};
+        const GLint indices[] = {  0,1,2, 0,2,3 };
 
+        glBindTexture(GL_TEXTURE_2D, tex);
         glPushMatrix();
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, 0, vers);
+
             glEnableClientState(GL_COLOR_ARRAY);
             glColorPointer(3, GL_FLOAT, 0, cors);
-            glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, indices);
+
+            glEnableClientState(GL_NORMAL_ARRAY);
+            glNormalPointer(GL_FLOAT, 0, nors);
+
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
         glPopMatrix();
 
         glfwSwapBuffers(window);
