@@ -28,47 +28,93 @@ const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
 const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
 const GLfloat high_shininess[] = { 100.0f };
 
-struct BitmapHeader
-{
-    unsigned short type;
-    unsigned int size;
-    unsigned short reserved1;
-    unsigned short reserved2;
-    unsigned short offbits;
+#pragma pack(push, 1)
 
+struct BitmapFileHeader
+{
+    unsigned short type;            //   位图文件的类型，必须为BM
+    unsigned long size;              //   位图文件的大小，以字节为单位
+    unsigned short reserved1;       //   位图文件保留字，必须为0
+    unsigned short reserved2;       //   位图文件保留字，必须为0
+    unsigned long offbits;         //   位图数据的起始位置，以相对于位图
+    //   文件头的偏移量表示，以字节为单位
 };
 
 struct BitmapInfoHeader
 {
-    unsigned int size;
-    int width;
-    int height;
-    unsigned short planes;
-    unsigned short bitcount;
-    unsigned int compression;
-    unsigned int sizeimage;
-    int xpelspermeter;
-    int ypelspermeter;
-    unsigned int clrused;
-    unsigned int clrimportant;
+    unsigned long size;          //   本结构所占用字节数
+    unsigned long width;         //   位图的宽度，以像素为单位
+    unsigned long height;        //   位图的高度，以像素为单位
+    unsigned short planes;       //   目标设备的级别，必须为1
+    unsigned short bitcount;     //   每个像素所需的位数，必须是1(双色),4(16色)，8(256色)或24(真彩色)之一
+    unsigned long compression;   //   位图压缩类型，必须是   0(不压缩),1(BI_RLE8压缩类型)或2(BI_RLE4压缩类型)之一
+    unsigned long sizeimage;     //   位图的大小，以字节为单位
+    unsigned long xpelspermeter; //   位图水平分辨率，每米像素数
+    unsigned long ypelspermeter; //   位图垂直分辨率，每米像素数
+    unsigned long clrused;       //   位图实际使用的颜色表中的颜色数
+    unsigned long clrimportant;  //   位图显示过程中重要的颜色数
 };
 
-unsigned int LoadBitmap(const char* filename)
+struct BGR
 {
+    unsigned char blue;
+    unsigned char green;
+    unsigned char red;
+};
+
+struct RGB
+{
+    unsigned char red;
+    unsigned char blue;
+    unsigned char green;
+};
+
+#pragma pack(pop)
+
+unsigned int LoadBitmap24(const char* filename)
+{
+    unsigned int tex = -1;
     FILE* fp = fopen(filename, "rb");
     if (!fp)
         return 0;
 
-    BitmapHeader header;
-    BitmapInfoHeader infoheader;
+    BitmapFileHeader fileheader;
+    BitmapInfoHeader infohead;
 
-    fread(&header, sizeof(BitmapHeader), 1, fp);
-    fread(&infoheader, sizeof(BitmapInfoHeader), 1, fp);
+    fread(&fileheader, sizeof(BitmapFileHeader), 1, fp);
+    fread(&infohead, sizeof(BitmapInfoHeader), 1, fp);
 
+    int width = infohead.width;
+    int height = infohead.height;
+    int bitcount = infohead.bitcount;
 
+    if (bitcount == 24)
+    {
+        int num = width * height;
+        BGR* buff = new BGR[num];
+        fseek(fp, fileheader.offbits, SEEK_SET) ;
+        fread(buff, sizeof(BGR) * num, 1, fp);
+        RGB* img = new BGR[num];
+        for (int i = 0; i < num; ++i)
+        {
+            BGR* p1 = buff[i];
+            RGB* p2 = img[i];
+            p2.blue = p1.blue;
+            p2.red = p1.red;
+            p2.green = p1.green;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, &tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Linear Min Filter
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Linear Mag Filter
+        glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &img.red);
+
+        delete[] buff;
+        delete[] img;
+    }
 
     fclose(fp);
-    return 0;
+    return tex;
 }
 
 //----------------------------------------------------------------------------
