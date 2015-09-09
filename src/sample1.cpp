@@ -18,7 +18,7 @@ struct BitmapFileHeader
     unsigned long size;           //   位图文件的大小，以字节为单位
     unsigned short reserved1;     //   位图文件保留字，必须为0
     unsigned short reserved2;     //   位图文件保留字，必须为0
-    unsigned long offbits;       //   位图数据的起始位置，以相对于位图
+    unsigned long offbits;        //   位图数据的起始位置，以相对于位图
 };
 
 struct BitmapInfoHeader
@@ -38,8 +38,7 @@ struct BitmapInfoHeader
 
 struct RGB { unsigned char red, green, blue; };
 #pragma pack(pop)
-
-// 因为bmp图片的颜色顺序是b,g,r 所有要转化成r,g,b 交换r,b
+// bmp 存储数据的数序是bgr, opengl绘制使用颜色顺序是rgb,所有需要转换一下
 inline void SwapBGR2RGB(RGB& rgb)
 {
     unsigned char t = rgb.red;
@@ -87,31 +86,28 @@ unsigned int LoadBitmap24(const char* filename)
     return tex;
 }
 
-GLchar* ReadShaderData1(const char* filename, GLsizei &sz)
+inline GLchar* SampleReadFileData(const char* filename, GLsizei &sz)
 {
-    FILE *fn = fopen(filename, "rb");
-    if (fn == NULL)
-    {
-        printf(" cant open file \n");
+    FILE *fp = fopen(filename, "rb");
+    if (!fp)
         return NULL;
-    }
-    fseek(fn, 0L, SEEK_END);
-    sz = ftell(fn);
-    fseek(fn, 0L, SEEK_SET);
-    GLchar* data = (GLchar*)malloc(sz);
-    sz = fread((void*)data, 1, sz, fn);
-    fclose(fn);
+    fseek(fp, 0L, SEEK_END);
+    sz = ftell(fp);
+    fseek(fp, 0L, SEEK_SET);
+    GLchar* data = new GLchar[sz];
+    sz = fread((void*)data, 1, sz, fp);
+    fclose(fp);
     return data;
 }
 
-//----------------------------------------------------------------------------
-//
-GLuint  buildShader1(const char* filename, GLenum type)
+GLuint  SampleBuildShader(const char* filename, GLenum type)
 {
     GLsizei sz = 0;
     GLint succ;
-    GLchar* vsSource = ReadShaderData1(filename, sz);
+    GLchar* vsSource = SampleReadFileData(filename, sz);
+    printf("-----------1-----------\n");
     GLuint  vs = glCreateShader(type);
+    printf("-----------2-----------\n");
     glShaderSource(vs, 1, &vsSource, &sz);
     glCompileShader(vs);
     glGetShaderiv(vs, GL_COMPILE_STATUS, &succ);
@@ -127,14 +123,13 @@ GLuint  buildShader1(const char* filename, GLenum type)
     return vs;
 }
 
-//----------------------------------------------------------------------------
-//
-GLuint buildProgram1(const char*vsfn, const char* frfn)
+GLuint SampleBuildProgram(const char*vsfn, const char* frfn)
 {
     GLint linked;
+
+    GLuint vsshader = SampleBuildShader(vsfn, GL_VERTEX_SHADER);
+    GLuint frshader = SampleBuildShader(frfn, GL_FRAGMENT_SHADER);
     GLuint program = glCreateProgram();
-    GLuint vsshader = buildShader1(vsfn, GL_VERTEX_SHADER);
-    GLuint frshader = buildShader1(frfn, GL_FRAGMENT_SHADER);
     glAttachShader(program, vsshader);
     glAttachShader(program, frshader);
     glLinkProgram(program);
@@ -151,8 +146,6 @@ GLuint buildProgram1(const char*vsfn, const char* frfn)
     return program;
 }
 
-static void mouse_callback(GLFWwindow* window, int button, int action, int mods){}
-static void cursorpos_callback(GLFWwindow *window, double x, double y){}
 static void error_callback(int error, const char* description){fputs(description, stderr);}
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -160,20 +153,24 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-
 int main(int argc, char *argv[])
 {
+    glewExperimental = GL_TRUE;
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     glfwInit();
+    glfwWindowHint(GLFW_SAMPLES, 0);    // 0x antialiasing
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     glfwSetKeyCallback(window, key_callback);
-    glfwSetMouseButtonCallback(window, mouse_callback);
-    glfwSetCursorPosCallback(window, cursorpos_callback);
 
-    //buildProgram("Data/shader.vert", "Data/shader.frag");
+    //GLuint program = SampleBuildProgram("Data/shader.vert", "Data/shader.frag");
     GLuint tex = LoadBitmap24("Data/demo.bmp");
     glClearColor(0,0,0,1);      // 清理屏幕为黑色
     glEnable(GL_CULL_FACE);     // 启用面剔除
@@ -212,6 +209,58 @@ int main(int argc, char *argv[])
     glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);  // 设置镜面反射的颜色
     glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);// 镜面指数 该值越小，表示材质越粗糙，点光源发射的光线照射到上面，也可以产生较大的亮点
 
+    const GLfloat vers[] = {
+        -0.5,-0.5, 0.5,  0.5,-0.5, 0.5,  0.5,0.5, 0.5, -0.5,0.5, 0.5,   // 正面 4个顶点
+         0.5,-0.5,-0.5, -0.5,-0.5,-0.5, -0.5,0.5,-0.5,  0.5,0.5,-0.5,   // 背面 4个顶点
+
+        -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,-0.5, -0.5, 0.5,-0.5,   // 上面 4个顶点
+        -0.5,-0.5,-0.5, 0.5,-0.5,-0.5, 0.5,-0.5, 0.5, -0.5,-0.5, 0.5,   // 下面 4个顶点
+
+        -0.5,-0.5,-0.5, -0.5,-0.5, 0.5, -0.5,0.5, 0.5, -0.5,0.5,-0.5,   // 左面 4个顶点
+         0.5,-0.5, 0.5,  0.5,-0.5,-0.5,  0.5,0.5,-0.5,  0.5,0.5, 0.5,   // 右面 4个顶点
+    };
+
+    const GLfloat cors[] = {
+        1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
+        1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
+        1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
+        1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
+        1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
+        1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
+    };
+
+    const GLfloat nors[] = {
+        0,0,1, 0,0,1, 0,0,1, 0,0,1,
+        0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1,
+        0,1,0, 0,1,0, 0,1,0, 0,1,0,
+        0,-1,0, 0,-1,0, 0,-1,0, 0,-1,0,
+        -1,0,0, -1,0,0, -1,0,0, -1,0,0,
+    };
+
+    const GLfloat uvs[] = {
+        0,0, 1,0, 1,1, 0,1,
+        0,0, 1,0, 1,1, 0,1,
+        0,0, 1,0, 1,1, 0,1,
+        0,0, 1,0, 1,1, 0,1,
+        0,0, 1,0, 1,1, 0,1,
+        0,0, 1,0, 1,1, 0,1,
+    };
+
+    // 绘制三角形面的顺序是,前后,左右,上下
+    const GLint indices[] = {
+        0,1,2, 0,2,3,
+        4,5,6, 4,6,7,
+
+        8,9,10, 8,10,11,
+        12,13,14, 12,14,15,
+
+        16,17,18, 16,18,19,
+        20,21,22, 20,22,23,
+    };
+
+    float rx = 0.0f;
+    float ry = 0.0f;
+
     while (!glfwWindowShouldClose(window))
     {
         int width, height;
@@ -224,17 +273,16 @@ int main(int argc, char *argv[])
         glMatrixMode(GL_MODELVIEW);                     // 选择模型矩阵
         glLoadIdentity();
 
-        // render
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 清理颜色和深度缓存
         glTranslatef(0.0f ,0.0f, -3.0f);
 
-        const GLfloat vers[] = { 0.0f,0.0f,0.0f, 1.0f,0.0f,0.0f, 1.0f,1.0f,0.0f, 0.0f,1.0f,0.0f, };
-        const GLfloat cors[] = { 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, };
-        const GLfloat nors[] = { 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f};
-        const GLfloat uvs[] = {0.0f,0.0f, 1.0f,0.0f, 1.0f,1.0f, 0.0f,1.0f};
-        const GLint indices[] = {  0,1,2, 0,2,3 };
+        glRotatef(rx, 1.0f, 0.0f, 0.0f);
+        glRotatef(ry, 0.0f, 1.0f, 0.0f);
 
-        glBindTexture(GL_TEXTURE_2D, tex);
+        rx = rx > 360 ? 0 : (rx + 0.1f);
+        ry = ry > 360 ? 0 : (ry + 0.1f);
+
+        glBindTexture(GL_TEXTURE_2D, tex);      // 绑定纹理
         glPushMatrix();
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, 0, vers);
@@ -248,7 +296,7 @@ int main(int argc, char *argv[])
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             glTexCoordPointer(2, GL_FLOAT, 0, uvs);
 
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, indices);
         glPopMatrix();
 
         glfwSwapBuffers(window);
