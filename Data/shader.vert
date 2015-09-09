@@ -1,9 +1,8 @@
 uniform vec4 position; 	// from 
-varying vec4 color;		// to fragment
+
 void main()
 {
-	//gl_Position = position;
 	//gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+	gl_TexCoord[0] = gl_MultiTexCoord0; 
 	gl_Position = ftransform();
-	//gl_FrontColor = gl_Color;
 }

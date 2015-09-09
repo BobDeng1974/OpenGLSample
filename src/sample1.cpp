@@ -122,7 +122,6 @@ GLuint  SampleBuildShader(const char* filename, GLenum type)
 GLuint SampleBuildProgram(const char*vsfn, const char* frfn)
 {
     GLint linked;
-
     GLuint vsshader = SampleBuildShader(vsfn, GL_VERTEX_SHADER);
     GLuint frshader = SampleBuildShader(frfn, GL_FRAGMENT_SHADER);
     GLuint program = glCreateProgram();
@@ -169,8 +168,14 @@ int main(int argc, char *argv[])
     glfwSwapInterval(1);
     glfwSetKeyCallback(window, key_callback);
 
-    GLuint program = SampleBuildProgram("Data/shader.vert", "Data/shader.frag");
-    GLuint tex = LoadBitmap24("Data/demo.bmp");
+    GLuint tex = LoadBitmap24("Data/demo.bmp");     // 加载一张bmp纹理
+    GLuint program = SampleBuildProgram("Data/shader.vert", "Data/shader.frag"); // 使用shader, 把r<->b交换颜色
+    GLint t1 = glGetUniformLocation(program, "tex");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glUniform1i(t1, 0);
+
+
     glClearColor(0,0,0,1);      // 清理屏幕为黑色
     glEnable(GL_CULL_FACE);     // 启用面剔除
     glCullFace(GL_BACK);
