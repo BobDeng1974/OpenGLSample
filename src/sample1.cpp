@@ -1,8 +1,6 @@
 /**
 整体要实现的东东:
-0. 简单的OpenGL程序使用glfw来实现
-1. 简单GUI
-2. 简单骨骼动画ms3d, 《半条命》的骨骼动画
+简单的OpenGL程序使用glfw来实现
 */
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -104,10 +102,8 @@ GLuint  SampleBuildShader(const char* filename, GLenum type)
 {
     GLsizei sz = 0;
     GLint succ;
-    GLchar* vsSource = SampleReadFileData(filename, sz);
-    printf("-----------1-----------\n");
+    const GLchar* vsSource = SampleReadFileData(filename, sz);
     GLuint  vs = glCreateShader(type);
-    printf("-----------2-----------\n");
     glShaderSource(vs, 1, &vsSource, &sz);
     glCompileShader(vs);
     glGetShaderiv(vs, GL_COMPILE_STATUS, &succ);
@@ -146,7 +142,7 @@ GLuint SampleBuildProgram(const char*vsfn, const char* frfn)
     return program;
 }
 
-static void error_callback(int error, const char* description){fputs(description, stderr);}
+static void error_callback(int error, const char* description){fputs(description, stderr); fputs("\n", stderr);}
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -155,22 +151,25 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(int argc, char *argv[])
 {
-    glewExperimental = GL_TRUE;
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 0);    // 0x antialiasing
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
     glfwMakeContextCurrent(window);
+
+    glewExperimental = GL_TRUE;
+    glewInit();
+
+    //glfwWindowHint(GLFW_SAMPLES, 0);    // 0x antialiasing
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     glfwSwapInterval(1);
     glfwSetKeyCallback(window, key_callback);
 
-    //GLuint program = SampleBuildProgram("Data/shader.vert", "Data/shader.frag");
+    GLuint program = SampleBuildProgram("Data/shader.vert", "Data/shader.frag");
     GLuint tex = LoadBitmap24("Data/demo.bmp");
     glClearColor(0,0,0,1);      // 清理屏幕为黑色
     glEnable(GL_CULL_FACE);     // 启用面剔除

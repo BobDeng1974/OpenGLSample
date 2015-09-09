@@ -16,10 +16,10 @@
 				</Compiler>
 				<Linker>
 					<Add library="glew32" />
-					<Add library="glfw3dll" />
 					<Add library="opengl32" />
 					<Add library="winmm" />
 					<Add library="gdi32" />
+					<Add library="glfw3dll" />
 				</Linker>
 			</Target>
 			<Target title="Release">
