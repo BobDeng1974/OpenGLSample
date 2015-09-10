@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     glewInit();
 
     //glfwWindowHint(GLFW_SAMPLES, 0);    // 0x antialiasing
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);  // 设置OPENGL版本3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
     GLint t1 = glGetUniformLocation(program, "tex");
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
-    glUniform1i(t1, 0);
+    glUniform1i(t1, 0);;//对应纹理第一层
 
 
     glClearColor(0,0,0,1);      // 清理屏幕为黑色
@@ -278,7 +278,8 @@ int main(int argc, char *argv[])
         glLoadIdentity();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 清理颜色和深度缓存
-        glTranslatef(0.0f ,0.0f, -3.0f);
+        //glTranslatef(0.0f ,0.0f, -3.0f);
+        gluLookAt(0.0f,0.0f,-3.0f, 0.0f,0.0f,0.0f, 0.0f,1.0f,0.0);
 
         glRotatef(rx, 1.0f, 0.0f, 0.0f);
         glRotatef(ry, 0.0f, 1.0f, 0.0f);

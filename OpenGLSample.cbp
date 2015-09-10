@@ -20,6 +20,7 @@
 					<Add library="winmm" />
 					<Add library="gdi32" />
 					<Add library="glfw3dll" />
+					<Add library="glu32" />
 				</Linker>
 			</Target>
 			<Target title="Release">
