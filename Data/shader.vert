@@ -1,4 +1,3 @@
-uniform vec4 position; 	// from 
 
 void main()
 {
