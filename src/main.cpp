@@ -5,9 +5,6 @@
 0. 简单的OpenGL程序使用glfw来实现
 1. 简单GUI
 2. 简单骨骼动画ms3d, 《半条命》的骨骼动画
-
-
-
 */
 
 #include <GL/glew.h>
@@ -20,11 +17,8 @@
 
 #include "texture.h"
 
-
 //=========================================================
-Texture texture;
 double xpos = 0, ypos = 0;
-
 
 // 顶点坐标
 const GLfloat vers[] = {
@@ -79,47 +73,13 @@ const GLint indices[] = {
     20,21,22, 20,22,23,
 };
 
-// 设置灯光的颜色
-const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
-const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
-
-// 设置材质的颜色
-const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
-const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
-const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat high_shininess[] = { 100.0f };
-
-
-//----------------------------------------------------------------------------
-//
-int LoadGLTextures()
-{
-    int Status = 0;
-    if (LoadTGA(&texture, "Data/ms.tga"))
-    {
-        glGenTextures(1, &texture.texID);
-        glBindTexture(GL_TEXTURE_2D, texture.texID);
-        glTexImage2D(GL_TEXTURE_2D, 0, texture.bpp / 8, texture.width, texture.height, 0, texture.type, GL_UNSIGNED_BYTE, texture.data);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-        if (texture.data)
-            free(texture.data);
-    }
-    return Status;
-}
-
 //----------------------------------------------------------------------------
 //
 GLchar* ReadShaderData(const char* filename, GLsizei &sz)
 {
     FILE *fn = fopen(filename, "rb");
-    if (fn == NULL)
-    {
-        printf(" cant open file \n");
+    if (!fn)
         return NULL;
-    }
     fseek(fn, 0L, SEEK_END);
     sz = ftell(fn);
     fseek(fn, 0L, SEEK_SET);
@@ -135,7 +95,7 @@ GLuint  buildShader(const char* filename, GLenum type)
 {
     GLsizei sz = 0;
     GLint succ;
-    GLchar* vsSource = ReadShaderData(filename, sz);
+    const GLchar* vsSource = ReadShaderData(filename, sz);
     GLuint  vs = glCreateShader(type);
     glShaderSource(vs, 1, &vsSource, &sz);
     glCompileShader(vs);
@@ -176,76 +136,6 @@ GLuint buildProgram(const char*vsfn, const char* frfn)
     return program;
 }
 
-//----------------------------------------------------------------------------
-//
-void test_draw()
-{
-
-    const GLfloat vers[] = {
-         0.0f,0.0f,0.0f,
-         25.0f,0.0f,0.0f,
-         30.0f,30.0f,0.0f,
-         0.0f,25.0f,0.0f,
-    };
-    const GLfloat cors[] = {
-        1.0f,1.0f,1.0f,
-        1.0f,1.0f,1.0f,
-        1.0f,1.0f,1.0f,
-        1.0f,1.0f,1.0f,
-    };
-    const GLint indices[] = {
-        0,1,2,3
-    };
-
-    glPushMatrix();
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, vers);
-        glEnableClientState(GL_COLOR_ARRAY);
-        glColorPointer(3, GL_FLOAT, 0, cors);
-        glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, indices);
-    glPopMatrix();
-}
-
-//----------------------------------------------------------------------------
-//
-static void init()
-{
-    //buildProgram("Data/shader.vert", "Data/shader.frag");
-    LoadGLTextures();
-    glClearColor(0,0,0,1);      // 清理屏幕为黑色
-    glEnable(GL_CULL_FACE);     // 启用面剔除
-    glCullFace(GL_BACK);
-
-    glEnable(GL_DEPTH_TEST);    // 启用深度测试
-
-    glEnable(GL_LIGHT0);        // 启用灯光0
-    glEnable(GL_NORMALIZE);     // 启用法线
-    glEnable(GL_COLOR_MATERIAL);// 启用材质模式
-    glEnable(GL_LIGHTING);      // 打开灯光
-
-    //
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER ,0.9);//0.5可以换成任何在0~1之间的数
-    glShadeModel(GL_SMOOTH);
-    //glClearDepth(1.0f);
-    //glDepthFunc(GL_LEQUAL);
-    //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-    // 设置灯光
-    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);  // 设置环境光颜色
-    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);  // 设置漫反射的颜色
-    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);  // 设置镜面反射的颜色
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);  // 设置灯的位置
-
-    // 设置材质
-    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);   // 设置环境光颜色
-    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);   // 设置漫反射的颜色
-    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);  // 设置镜面反射的颜色
-    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);// 镜面指数 该值越小，表示材质越粗糙，点光源发射的光线照射到上面，也可以产生较大的亮点
-
-}
 
 //----------------------------------------------------------------------------
 //
@@ -282,20 +172,75 @@ static void cursorpos_callback(GLFWwindow *window, double x, double y)
 
 //----------------------------------------------------------------------------
 //
-int main1(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     glfwInit();
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
     glfwMakeContextCurrent(window);
+
+    glewExperimental = GL_TRUE;
+    glewInit();
+
+    //glfwWindowHint(GLFW_SAMPLES, 0);    // 0x antialiasing
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);  // 设置OPENGL版本3.3
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     glfwSwapInterval(1);
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_callback);
     glfwSetCursorPosCallback(window, cursorpos_callback);
 
-    init();
-    //glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+    GLuint tex1 = LoadGLTextures("Data/demo.tga");
+    GLuint program = buildProgram("Data/normalmap.vert", "Data/normalmap.frag"); // 使用shader, 把r<->b交换颜色
+    GLint t1 = glGetUniformLocation(program, "tex");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex1);
+    glUniform1i(t1, 0);;//对应纹理第一层
+
+    glClearColor(0,0,0,1);      // 清理屏幕为黑色
+    glEnable(GL_CULL_FACE);     // 启用面剔除
+    glCullFace(GL_BACK);
+
+    glEnable(GL_DEPTH_TEST);    // 启用深度测试
+
+    glEnable(GL_LIGHT0);        // 启用灯光0
+    glEnable(GL_NORMALIZE);     // 启用法线
+    glEnable(GL_COLOR_MATERIAL);// 启用材质模式
+    glEnable(GL_LIGHTING);      // 打开灯光
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER ,0.9);//0.5可以换成任何在0~1之间的数
+    glShadeModel(GL_SMOOTH);
+    //glClearDepth(1.0f);
+    //glDepthFunc(GL_LEQUAL);
+    //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+    // 设置灯光的颜色
+    const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
+    const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+    const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);  // 设置环境光颜色
+    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);  // 设置漫反射的颜色
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);  // 设置镜面反射的颜色
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);  // 设置灯的位置
+
+
+    // 设置材质的颜色
+    const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
+    const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
+    const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
+    const GLfloat high_shininess[] = { 100.0f };
+    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);   // 设置环境光颜色
+    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);   // 设置漫反射的颜色
+    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);  // 设置镜面反射的颜色
+    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);// 镜面指数 该值越小，表示材质越粗糙，点光源发射的光线照射到上面，也可以产生较大的亮点
 
     while (!glfwWindowShouldClose(window))
     {
@@ -309,18 +254,16 @@ int main1(int argc, char *argv[])
         glMatrixMode(GL_MODELVIEW);                     // 选择模型矩阵
         glLoadIdentity();
 
-        // render
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glTranslatef(0.0f ,0.0f, -3.0f);
 
-        test_draw();
+        gluLookAt(0.0f,0.0f,-3.0f, 0.0f,0.0f,0.0f, 0.0f,1.0f,0.0);
 
-        float r  = 50 * (float)glfwGetTime();
+        //float r  = 50 * (float)glfwGetTime();
         glPushMatrix();
-            glRotatef(r, 1.0f, 0.0f, 0.0f);
-            glRotatef(r, 0.0f, 1.0f, 0.0f);
+            glRotatef(45, 1.0f, 0.0f, 0.0f);
+            glRotatef(45, 0.0f, 1.0f, 0.0f);
 
-            glBindTexture(GL_TEXTURE_2D, texture.texID);
+            glBindTexture(GL_TEXTURE_2D, tex1);
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, 0, vers);
 

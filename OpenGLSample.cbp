@@ -48,7 +48,6 @@
 		<Unit filename="src/mathlib.h" />
 		<Unit filename="src/ms3dloader.cpp" />
 		<Unit filename="src/ms3dloader.h" />
-		<Unit filename="src/sample1.cpp" />
 		<Unit filename="src/texture.cpp" />
 		<Unit filename="src/texture.h" />
 		<Extensions>

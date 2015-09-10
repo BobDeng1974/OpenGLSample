@@ -40,6 +40,24 @@ bool LoadCompressedTGA(Texture *, FILE *);
 
 //----------------------------------------------------------------------------
 //
+unsigned int LoadGLTextures(const char* filename)
+{
+    Texture texture;
+    if (LoadTGA(&texture, filename))
+    {
+        glGenTextures(1, &texture.texID);
+        glBindTexture(GL_TEXTURE_2D, texture.texID);
+        glTexImage2D(GL_TEXTURE_2D, 0, texture.bpp / 8, texture.width, texture.height, 0, texture.type, GL_UNSIGNED_BYTE, texture.data);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+        if (texture.data)
+            free(texture.data);
+    }
+    return texture.texID;
+}
+
+//----------------------------------------------------------------------------
+//
 bool LoadTGA(Texture* texture, const char* filename)
 {
     bool ret = false;

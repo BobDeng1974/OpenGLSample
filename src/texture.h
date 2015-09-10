@@ -17,8 +17,9 @@ struct Texture
 };
 
 
-bool LoadTGA(Texture* , const char* );
 
+unsigned int LoadGLTextures(const char* filename);
+bool LoadTGA(Texture* , const char* );
 bool ReadFileData(const char* filename, char* data, size_t &sz);
 
 #endif // __TEXTURE_H__
