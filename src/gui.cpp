@@ -9,7 +9,10 @@ namespace Simple
 {
 
     std::vector<Window*> renderWins;
-    Graphic* gp = new Graphic;
+    //Graphic* gp = new Graphic;
+    //AssetsCache* cache = new AssetsCache;
+    Graphic* gp = NULL;
+    AssetsCache* cache = NULL;
 
     const unsigned int TRANGLES_MAX_NUM = 5000;
     struct st_graphic_buffer_t
@@ -332,6 +335,87 @@ namespace Simple
         draw();
         endDraw();
     }
+
+    //===========================================================
+    //
+    void create_graphic()
+    {
+        assert(gp == NULL);
+        gp = new Graphic;
+    }
+
+    //===========================================================
+    //
+    void destroy_graphic()
+    {
+        assert(gp != NULL);
+        delete gp;
+        gp = NULL;
+    }
+
+    AssetsCache::AssetsCache(){}
+    AssetsCache::~AssetsCache()
+    {
+        map<int, rdTexture*>::iterator i = mId2TextureMap.begin();
+        for (; i != mId2TextureMap.end(); ++i)
+            delete i->second;
+        mId2TextureMap.clear();
+
+        map<int, FntFile*>::iterator j = mId2FntFileMap.begin();
+        for (; j != mId2FntFileMap.end(); ++j)
+            delete j->second;
+        mId2FntFileMap.clear();
+    }
+
+    bool AssetsCache::push(int id, rdTexture* tex)
+    {
+        map<int, rdTexture*>::iterator i = mId2TextureMap.find(id);
+        if (i != mId2TextureMap.end())
+            return false;
+        mId2TextureMap.insert(pair<int, rdTexture*>(id, tex));
+        return true;
+    }
+    bool AssetsCache::push(int id, FntFile* fnt)
+    {
+        map<int, FntFile*>::iterator i = mId2FntFileMap.find(id);
+        if (i != mId2FntFileMap.end())
+            return false;
+        mId2FntFileMap.insert(pair<int, FntFile*>(id, fnt));
+        return true;
+    }
+
+    rdTexture* AssetsCache::getRdTextureById(int id)
+    {
+        map<int, rdTexture*>::iterator i = mId2TextureMap.find(id);
+        if (i != mId2TextureMap.end())
+            return i->second;
+        return NULL;
+    }
+    FntFile* AssetsCache::getFntFileById(int id)
+    {
+        map<int, FntFile*>::iterator i = mId2FntFileMap.find(id);
+        if (i != mId2FntFileMap.end())
+            return i->second;
+        return NULL;
+    }
+
+    //===========================================================
+    //
+    void create_assetscache()
+    {
+        assert(cache == NULL);
+        cache = new AssetsCache;
+    }
+
+    //===========================================================
+    //
+    void destroy_assetscache()
+    {
+        assert(cache != NULL);
+        delete cache;
+        cache = NULL;
+    }
+
     //===========================================================
     //
     Window::Window()

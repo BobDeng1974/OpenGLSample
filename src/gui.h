@@ -8,7 +8,11 @@
 #include <string>
 #include <assert.h>
 
+#include "fntloader.h"
+
 using namespace std;
+using namespace fnt_space;
+
 /**
 UI 这块，暂时这样写
 1. 纹理方面使用两张，一张是fnt文字,一张是UI使用的纹理
@@ -77,6 +81,8 @@ namespace Simple
     };
 
     extern Graphic *gp;
+    void create_graphic();
+    void destroy_graphic();
 
     // 最基础的UI,这里不使用纹理来进行直接使用颜色
     class rdPoint
@@ -129,6 +135,29 @@ namespace Simple
         float u0, v0, u1, v1;
         unsigned int tex;
     };
+
+    //--------------------------------------------
+    // cache
+    class AssetsCache
+    {
+    private:
+        map<int, rdTexture*> mId2TextureMap;
+        map<int, FntFile*> mId2FntFileMap;
+    public:
+
+        AssetsCache();
+        ~AssetsCache();
+
+        bool push(int id, rdTexture* tex);
+        bool push(int id, FntFile* fnt);
+
+        rdTexture* getRdTextureById(int id);
+        FntFile* getFntFileById(int id);
+    };
+
+    extern AssetsCache* cache;
+    void create_assetscache();
+    void destroy_assetscache();
 
     typedef void (*Function0)();
     typedef void (*Function1)(float value);
@@ -199,9 +228,11 @@ namespace Simple
     public:
         explicit Label();
         Label(const std::string& str);
+        void setFntFile(FntFile* fnt) { mFnt = fnt; }
         virtual void draw(float x = 0, float y = 0);
     protected:
         std::string mString;
+        FntFile* mFnt;
     };
     //-------------------------------------------
     class Slider : public Window

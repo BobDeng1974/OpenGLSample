@@ -16,6 +16,10 @@
 #include <string.h>
 
 #include "texture.h"
+#include "gui.h"
+#include "fntloader.h"
+
+using namespace Simple;
 
 //=========================================================
 double xpos = 0, ypos = 0;
@@ -174,6 +178,7 @@ static void cursorpos_callback(GLFWwindow *window, double x, double y)
 //
 int main(int argc, char *argv[])
 {
+    create_graphic();
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     glfwInit();
@@ -193,6 +198,12 @@ int main(int argc, char *argv[])
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_callback);
     glfwSetCursorPosCallback(window, cursorpos_callback);
+
+    // 读取UI纹理和fnt纹理
+    GLuint fntText = LoadGLTextures("Data/fnt_arial.tga");
+    FntFile fntFile;
+    fntFile.loadFntFile("Data/fnt_arial.fnt");
+
 
     GLuint tex1 = LoadGLTextures("Data/demo.tga");
     GLuint program = buildProgram("Data/normalmap.vert", "Data/normalmap.frag"); // 使用shader, 把r<->b交换颜色
@@ -256,6 +267,17 @@ int main(int argc, char *argv[])
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // UI
+        gp->render();
+        // Model
+
+
+        // 两个球体,主要是材质变换
+
+
+        // 两个有无发现贴图对比
+
+
         gluLookAt(0.0f,0.0f,-3.0f, 0.0f,0.0f,0.0f, 0.0f,1.0f,0.0);
 
         //float r  = 50 * (float)glfwGetTime();
@@ -286,6 +308,8 @@ int main(int argc, char *argv[])
 
     glfwDestroyWindow(window);
     glfwTerminate();
+    destroy_graphic();
+
     return EXIT_SUCCESS;
 }
 
