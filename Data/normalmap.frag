@@ -1,9 +1,10 @@
 //fragment shader 
 uniform float shiness; 
 uniform vec4 ambient, diffuse, specular; 
-  
-uniform sampler2D bumptex; 
+
 uniform sampler2D basetex; 
+uniform sampler2D bumptex; 
+
   
 float amb = 0.2; 
 float diff = 0.2; 
@@ -13,7 +14,8 @@ varying vec3 lightdir;
 varying vec3 halfvec; 
 varying vec3 norm; 
 varying vec3 eyedir; 
-  
+ 
+/*
 void main(void) 
 { 
    vec3 vlightdir = normalize(lightdir); 
@@ -39,4 +41,12 @@ void main(void)
    gl_FragColor = vec4(amb * ambient.xyz * baseCol.xyz 
                  + diff * diffuse.xyz * diffusefract * baseCol.xyz 
                  + spec * specular.xyz * specularfract ,1.0); 
+}
+*/
+
+void main()
+{
+	//gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+	 vec4 color = texture2D(basetex, gl_TexCoord[0].st);
+	gl_FragColor = vec4(color.b, color.r, color.g, color.a);
 }

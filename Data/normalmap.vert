@@ -8,7 +8,8 @@ varying vec3 norm;
 varying vec3 eyedir; 
   
 attribute vec3 rm_Tangent; 
-  
+ 
+/*
 void main(void) 
 { 
    vec4 pos = gl_ModelViewMatrix * gl_Vertex; 
@@ -46,4 +47,12 @@ void main(void)
    gl_TexCoord[0] = gl_MultiTexCoord0; 
     
    gl_Position = ftransform(); 
+}
+*/
+
+void main()
+{
+	//gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+	gl_TexCoord[0] = gl_MultiTexCoord0; 
+	gl_Position = ftransform();
 }
