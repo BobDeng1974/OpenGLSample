@@ -1,52 +1,25 @@
-//fragment shader 
-uniform float shiness; 
-uniform vec4 ambient, diffuse, specular; 
+#version 110
 
-uniform sampler2D basetex; 
-uniform sampler2D bumptex; 
+uniform sampler2D colorMap;
+uniform sampler2D normalMap;
 
-  
-float amb = 0.2; 
-float diff = 0.2; 
-float spec = 0.6; 
-  
-varying vec3 lightdir; 
-varying vec3 halfvec; 
-varying vec3 norm; 
-varying vec3 eyedir; 
- 
-/*
-void main(void) 
-{ 
-   vec3 vlightdir = normalize(lightdir); 
-   vec3 veyedir = normalize(eyedir); 
-  
-   vec3 vnorm =   normalize(norm); 
-   vec3 vhalfvec =  normalize(halfvec);   
-    
-   vec4 baseCol = texture2D(basetex, gl_TexCoord[0].xy);  
-    
-   //Normal Map里的像素normal定义于该像素的切线空间 
-   vec3 tbnnorm = texture2D(bumptex, gl_TexCoord[0].xy).xyz; 
-    
-   tbnnorm = normalize((tbnnorm  - vec3(0.5))* 2.0);  
-    
-   float diffusefract =  max( dot(lightdir,tbnnorm) , 0.0);  
-   float specularfract = max( dot(vhalfvec,tbnnorm) , 0.0); 
-    
-   if(specularfract > 0.0){ 
-   specularfract = pow(specularfract, shiness); 
-   } 
-    
-   gl_FragColor = vec4(amb * ambient.xyz * baseCol.xyz 
-                 + diff * diffuse.xyz * diffusefract * baseCol.xyz 
-                 + spec * specular.xyz * specularfract ,1.0); 
-}
-*/
+varying vec3 lightDir;
+varying vec3 halfVector;
 
 void main()
 {
-	//gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-	 vec4 color = texture2D(basetex, gl_TexCoord[0].st);
-	gl_FragColor = vec4(color.b, color.r, color.g, color.a);
+    vec3 n = normalize(texture2D(normalMap, gl_TexCoord[0].st).xyz * 2.0 - 1.0);
+    vec3 l = normalize(lightDir);
+    vec3 h = normalize(halfVector);
+
+    float nDotL = max(0.0, dot(n, l));
+    float nDotH = max(0.0, dot(n, h));
+    float power = (nDotL == 0.0) ? 0.0 : pow(nDotH, gl_FrontMaterial.shininess);
+    
+    vec4 ambient = gl_FrontLightProduct[0].ambient;
+    vec4 diffuse = gl_FrontLightProduct[0].diffuse * nDotL;
+    vec4 specular = gl_FrontLightProduct[0].specular * power;
+    vec4 color = gl_FrontLightModelProduct.sceneColor + ambient + diffuse + specular;
+    
+    gl_FragColor = color * texture2D(colorMap, gl_TexCoord[0].st);
 }
