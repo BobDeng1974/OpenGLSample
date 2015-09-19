@@ -72,6 +72,7 @@ unsigned int LoadBitmap24(const char* filename)
         for (int i = 0; i < num; ++i)
             SwapBGR2RGB(img[i]);
 
+        glGenTextures(1, &tex);
         glBindTexture(GL_TEXTURE_2D, tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Linear Min Filter
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Linear Mag Filter
