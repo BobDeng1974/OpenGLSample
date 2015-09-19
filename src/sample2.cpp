@@ -390,11 +390,16 @@ unsigned int LoadBitmap24(const char* filename)
         for (int i = 0; i < num; ++i)
             SwapBGR2RGB(img[i]);
 
+        glGenTextures(1, &tex);
         glBindTexture(GL_TEXTURE_2D, tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Linear Min Filter
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Linear Mag Filter
-        glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &img->red);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 
+        glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &img->red);
+        glBindTexture(GL_TEXTURE_2D, 0);
         delete[] img;
     }
 
@@ -507,7 +512,7 @@ int main(int argc, char *argv[])
     GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
     GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
     GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    GLfloat light_position[] = { 0.0f, 3.0f, 5.0f, 0.0f };
+    GLfloat light_position[] = { 0.0f, 3.0f, -5.0f, 0.0f };
     glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);  // 设置环境光颜色
     glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);  // 设置漫反射的颜色
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);  // 设置镜面反射的颜色
@@ -614,6 +619,12 @@ int main(int argc, char *argv[])
     glBufferData(GL_ARRAY_BUFFER, sizeof(d_cube), d_cube, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+
     float rx = 0.0f;
     float ry = 0.0f;
 
@@ -633,6 +644,7 @@ int main(int argc, char *argv[])
         //glTranslatef(0.0f ,0.0f, -3.0f);
         gluLookAt(0.0f,0.0f,-6.0f, 0.0f,0.0f,0.0f, 0.0f,1.0f,0.0);
 
+        glPushMatrix();
         glRotatef(rx, 1.0f, 0.0f, 0.0f);
         glRotatef(ry, 0.0f, 1.0f, 0.0f);
 
@@ -674,9 +686,7 @@ int main(int argc, char *argv[])
 
         glDrawArrays(GL_QUADS, 0, sizeof(d_cube) / sizeof(d_cube[0]));
 
-
-        glUseProgram(0);
-        glPopAttrib();
+        glPopMatrix();
 
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
@@ -692,6 +702,8 @@ int main(int argc, char *argv[])
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_TEXTURE_2D);
 
+        glUseProgram(0);
+        glPopAttrib();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
