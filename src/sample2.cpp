@@ -464,6 +464,12 @@ GLuint SampleBuildProgram(const char*vsfn, const char* frfn)
     return program;
 }
 
+
+//---------------------全局变量------------------------
+float g_rx = 0.0f;
+float g_ry = 0.0f;
+//-----------------------------------------------------
+
 static void error_callback(int error, const char* description){fputs(description, stderr); fputs("\n", stderr);}
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -529,8 +535,8 @@ int main(int argc, char *argv[])
     glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);// 镜面指数 该值越小，表示材质越粗糙，点光源发射的光线照射到上面，也可以产生较大的亮点
 
     //----------------------------- 设置 shader ----------------------------
-    GLuint colormaptex = LoadBitmap24("Data/colormap.bmp");
-    GLuint normalmaptex = LoadBitmap24("Data/normalmap.bmp");
+    GLuint colormaptex = LoadBitmap24("Data/color_map.bmp");
+    GLuint normalmaptex = LoadBitmap24("Data/normal_map.bmp");
     GLuint program = SampleBuildProgram("Data/normalmap.vert", "Data/normalmap.frag");
 
     //----------------------------- 设置 shader ----------------------------
@@ -625,9 +631,6 @@ int main(int argc, char *argv[])
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
 
-    float rx = 0.0f;
-    float ry = 0.0f;
-
     while (!glfwWindowShouldClose(window))
     {
         int width, height;
@@ -644,16 +647,14 @@ int main(int argc, char *argv[])
         //glTranslatef(0.0f ,0.0f, -3.0f);
         gluLookAt(0.0f,0.0f,-6.0f, 0.0f,0.0f,0.0f, 0.0f,1.0f,0.0);
 
+        glLightfv(GL_LIGHT0, GL_POSITION, light_position);
         glPushMatrix();
-        glRotatef(rx, 1.0f, 0.0f, 0.0f);
-        glRotatef(ry, 0.0f, 1.0f, 0.0f);
 
-        rx = rx > 360 ? 0 : (rx + 0.1f);
-        ry = ry > 360 ? 0 : (ry + 0.1f);
+        glTranslatef(1.5f, 0.0f, 0.0f);
+        glRotatef(g_rx, 1.0f, 0.0f, 0.0f);
+        glRotatef(g_rx, 0.0f, 1.0f, 0.0f);
 
         glPushAttrib(GL_LIGHTING_BIT);
-
-        glLightfv(GL_LIGHT0, GL_POSITION, light_position);
         glUseProgram(program);
         glUniform1i(glGetUniformLocation(program, "colorMap"), 0);
         glUniform1i(glGetUniformLocation(program, "normalMap"), 1);
@@ -704,6 +705,30 @@ int main(int argc, char *argv[])
 
         glUseProgram(0);
         glPopAttrib();
+
+        //------------------------------------------------
+        glPushMatrix();
+        glTranslatef(-1.5f, 0.0f, 0.0f);
+        glRotatef(g_rx, 1.0f, 0.0f, 0.0f);
+        glRotatef(g_ry, 0.0f, 1.0f, 0.0f);
+
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, colormaptex);
+        glBindBuffer(GL_ARRAY_BUFFER, d_vertexBuffer);
+
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(Vertex), BUFFER_OFFSET(0));
+
+        //glClientActiveTexture(GL_TEXTURE0);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 3));
+
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
+
+        glDrawArrays(GL_QUADS, 0, sizeof(d_cube) / sizeof(d_cube[0]));
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glPopMatrix();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
