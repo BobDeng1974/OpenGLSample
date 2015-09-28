@@ -9,6 +9,13 @@
 #include <stdio.h>
 #include <string.h>
 
+//---------------------------------------------------------
+// 全局变量
+double g_mouse_sx = 0, g_mouse_sy = 0; // 鼠标按下的位置
+double g_roll_x = 0, g_roll_y = 0; // 鼠标拖动的偏移
+
+bool g_is_press = false;    // 鼠标是否点击
+
 #pragma pack(push, 1)
 struct BitmapFileHeader
 {
@@ -149,6 +156,37 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
+static void cursorpos_callback(GLFWwindow* win, double x, double y)
+{
+    if (g_is_press)
+    {
+        double xpos, ypos;
+        glfwGetCursorPos(win, &xpos, &ypos);
+        g_roll_y = g_mouse_sy - ypos;
+        g_roll_x = xpos - g_mouse_sx;
+    }
+}
+
+static void mousebutton_callback(GLFWwindow* win, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_RIGHT)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_is_press = true;
+            glfwGetCursorPos(win, &g_mouse_sx, &g_mouse_sy);
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            double xpos, ypos;
+            glfwGetCursorPos(win, &xpos, &ypos);
+            g_roll_y = g_mouse_sy - ypos;
+            g_roll_x = xpos - g_mouse_sx;
+            g_is_press = false;
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
     GLFWwindow* window;
@@ -168,6 +206,8 @@ int main(int argc, char *argv[])
 
     glfwSwapInterval(1);
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, cursorpos_callback);
+    glfwSetMouseButtonCallback(window, mousebutton_callback);
 
     GLuint tex = LoadBitmap24("Data/demo.bmp");     // 加载一张bmp纹理
     GLuint program = SampleBuildProgram("Data/shader.vert", "Data/shader.frag"); // 使用shader, 把r<->b交换颜色
@@ -282,11 +322,11 @@ int main(int argc, char *argv[])
         //glTranslatef(0.0f ,0.0f, -3.0f);
         gluLookAt(0.0f,0.0f,-3.0f, 0.0f,0.0f,0.0f, 0.0f,1.0f,0.0);
 
-        glRotatef(rx, 1.0f, 0.0f, 0.0f);
-        glRotatef(ry, 0.0f, 1.0f, 0.0f);
+        glRotatef(rx + g_roll_y, 1.0f, 0.0f, 0.0f);
+        glRotatef(ry + g_roll_x, 0.0f, 1.0f, 0.0f);
 
-        rx = rx > 360 ? 0 : (rx + 0.1f);
-        ry = ry > 360 ? 0 : (ry + 0.1f);
+        //rx = rx > 360 ? 0 : (rx + 0.1f);
+        //ry = ry > 360 ? 0 : (ry + 0.1f);
 
         glBindTexture(GL_TEXTURE_2D, tex);      // 绑定纹理
         glPushMatrix();
