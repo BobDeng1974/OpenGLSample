@@ -569,8 +569,8 @@ int main(int argc, char *argv[])
     glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);// 镜面指数 该值越小，表示材质越粗糙，点光源发射的光线照射到上面，也可以产生较大的亮点
 
     //----------------------------- 设置 shader ----------------------------
-    GLuint colormaptex = LoadBitmap24("Data/colormap.bmp");
-    GLuint normalmaptex = LoadBitmap24("Data/normalmap.bmp");
+    GLuint colormaptex = LoadBitmap24("Data/color_map.bmp");
+    GLuint normalmaptex = LoadBitmap24("Data/normal_map.bmp");
     GLuint program = SampleBuildProgram("Data/normalmap.vert", "Data/normalmap.frag");
 
     //----------------------------- 设置 shader ----------------------------
@@ -683,8 +683,10 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 清理颜色和深度缓存
         //glTranslatef(0.0f ,0.0f, -3.0f);
         gluLookAt(0.0f,0.0f,-6.0f, 0.0f,0.0f,0.0f, 0.0f,1.0f,0.0);
-
+        glLightfv(GL_LIGHT0, GL_POSITION, light_position);
         glPushMatrix();
+        glTranslatef(1.5f, 0.0f, 0.0f);
+
         glRotatef(rx + g_roll_y, 1.0f, 0.0f, 0.0f);
         glRotatef(ry + g_roll_x, 0.0f, 1.0f, 0.0f);
 
@@ -692,8 +694,6 @@ int main(int argc, char *argv[])
         //ry = ry > 360 ? 0 : (ry + 0.1f);
 
         glPushAttrib(GL_LIGHTING_BIT);
-
-        glLightfv(GL_LIGHT0, GL_POSITION, light_position);
         glUseProgram(program);
         glUniform1i(glGetUniformLocation(program, "colorMap"), 0);
         glUniform1i(glGetUniformLocation(program, "normalMap"), 1);
@@ -744,6 +744,31 @@ int main(int argc, char *argv[])
 
         glUseProgram(0);
         glPopAttrib();
+
+        //------------------------------------------------
+        glPushMatrix();
+        glTranslatef(-1.5f, 0.0f, 0.0f);
+        glRotatef(rx + g_roll_y, 1.0f, 0.0f, 0.0f);
+        glRotatef(ry + g_roll_x, 0.0f, 1.0f, 0.0f);
+
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, colormaptex);
+        glBindBuffer(GL_ARRAY_BUFFER, d_vertexBuffer);
+
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(Vertex), BUFFER_OFFSET(0));
+
+        //glClientActiveTexture(GL_TEXTURE0);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 3));
+
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNormalPointer(GL_FLOAT, sizeof(Vertex), BUFFER_OFFSET(sizeof(float) * 5));
+
+        glDrawArrays(GL_QUADS, 0, sizeof(d_cube) / sizeof(d_cube[0]));
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glPopMatrix();
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
