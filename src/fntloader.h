@@ -87,9 +87,11 @@ public:
     bool loadFntFile(const char* filename);
     fnt_char_t* findFntChar(int id);
 
-    void dump();
 
+    fnt_common_t getCommon() { return common; }
+    void dump();
 };
+
 
 };
 

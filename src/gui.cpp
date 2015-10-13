@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "stringcode.h"
+
 
 namespace Simple
 {
@@ -596,23 +598,126 @@ namespace Simple
     //===========================================================
     //
     Label::Label(const std::string& str)
-    : Window(0, 0, 1, 1), mString(str)
+    : Window(0, 0, 1, 1)
     {
+        setString(str);
+    }
+
+    //===========================================================
+    //
+    void Label::setString(const std::string& str)
+    {
+        using fnt_space;
+        mAreas.clear();
+        mString = str;
+
+        int sz = mString.size();
+        const char* dt = mString.c_str();
+
+        IntVector v;
+        const fnt_common_t& com = mFnt->getCommon();
+        int width = com.scaleW;
+        int height = com.scaleH;
+
+        converToUnicode(dt, sz, &v);
+        short xadvance = 0;
+        // 第1个文字都是在0,0,0;现在屏幕1个像素就是1
+        for (IntVector::iterator i = v.begin(); i != v.end(); ++i)
+        {
+            fnt_char_t* c = mFnt->findFntChar(*i);
+            rdFntArea area;
+
+            float x = c->x * 1.0 / width;
+            float y = c->y * 1.0 / height;
+            float w = c->width * 1.0 / width;
+            float h = c->height * 1.0 / height;
+
+            area.uv[0].u = x;
+            area.uv[0].v = y + h;
+
+            area.uv[1].u = x + w;
+            area.uv[1].v = y + h;
+
+            area.uv[2].u = x + w;
+            area.uv[2].v = y;
+
+            area.uv[3].u = x;
+            area.uv[3].v = y;
+
+            float nx = 0 + xadvance + c->xoffset * 1.0 / width;
+            float ny = 0 + c->yoffset * 1.0 / height;
+            float nw = c->width;
+            float nh = c->height;
+
+            area.pos[0].x = nx;
+            area.pos[0].y = ny + nh;
+            area.pos[0].z = 0;
+
+            area.pos[1].x = nx + nw;
+            area.pos[1].y = ny + nh;
+            area.pos[1].z = 0;
+
+            area.pos[2].x = nx + nw;
+            area.pos[2].y = ny;
+            area.pos[2].z = 0;
+
+            area.pos[3].x = nx;
+            area.pos[3].y = ny;
+            area.pos[3].z = 0;
+
+            mAreas.push_back(area);
+        }
     }
 
     //===========================================================
     // 这里无法叠在一起只有自己画了
     void Label::draw(float x, float y)
     {
-        int sz = mString.size();
-        const char* dt = mString.c_str();
-        glPushMatrix();
-        glTranslatef(x, y, 0);
-        glScalef(0.1, 0.1, 0.1);
-        glColor3f(mColor.r, mColor.g, mColor.b);
-        //for (int i = 0; i < sz; ++i)
-            //glutStrokeCharacter(GLUT_STROKE_ROMAN, dt[i]);
         glPopMatrix();
+
+        rdTexture &t = mTexture;
+        rdPoint &p = mPosition;
+
+
+        vector<rdFntArea>::iterator i = mArea.begin();
+        for (; i != mArea.end(); ++i)
+        {
+            rdFntArea a = (*i);
+
+            unsigned int idx = gp->getVertexIndex();
+            gp->bindtextrue(t.tex);
+
+            // 1
+            gp->vertex(p.x + x, p.y + y, 0);
+            gp->color(c.r, c.g, c.b);
+            gp->uv(t.u0, t.v0);
+            gp->normal(0, 0, 1);
+            gp->next_vertex();
+
+            // 2
+            gp->vertex(p.x + x + s.w, p.y + y, 0);
+            gp->color(c.r, c.g, c.b);
+            gp->uv(t.u1, t.v0);
+            gp->normal(0, 0, 1);
+            gp->next_vertex();
+
+            // 3
+            gp->vertex(p.x + x + s.w, p.y + y + s.h, 0);
+            gp->color(c.r, c.g, c.b);
+            gp->uv(t.u1, t.v1);
+            gp->normal(0, 0, 1);
+            gp->next_vertex();
+
+            // 4
+            gp->vertex(p.x + x, p.y + y + s.h, 0);
+            gp->color(c.r, c.g, c.b);
+            gp->uv(t.u0, t.v1);
+            gp->normal(0, 0, 1);
+            gp->next_vertex();
+
+            gp->index(idx, idx + 1, idx + 2);
+            gp->index(idx, idx + 2, idx + 3);
+        }
     }
     //===========================================================
     //

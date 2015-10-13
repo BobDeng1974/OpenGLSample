@@ -24,59 +24,6 @@ using namespace Simple;
 //=========================================================
 double xpos = 0, ypos = 0;
 
-// 顶点坐标
-const GLfloat vers[] = {
-    -0.5,-0.5,0.5, 0.5,-0.5,0.5, 0.5,0.5,0.5, -0.5,0.5,0.5, // 正面 4个顶点
-    0.5,-0.5,-0.5, -0.5,-0.5,-0.5, -0.5,0.5,-0.5, 0.5,0.5,-0.5, // 背面 4个顶点
-
-    -0.5,0.5,0.5, 0.5,0.5,0.5, 0.5,0.5,-0.5, -0.5,0.5,-0.5, // 上面 4个顶点
-    -0.5,-0.5,-0.5, 0.5,-0.5,-0.5, 0.5,-0.5,0.5, -0.5,-0.5,0.5, // 下面 4个顶点
-
-    -0.5,-0.5,-0.5, -0.5,-0.5,0.5, -0.5,0.5,0.5, -0.5,0.5,-0.5, // 左面 4个顶点
-    0.5,-0.5,0.5, 0.5,-0.5,-0.5, 0.5,0.5,-0.5, 0.5,0.5,0.5, // 右面 4个顶点
-};
-
-// 法线
-const GLfloat nors[] = {
-    0,0,1, 0,0,1, 0,0,1, 0,0,1,
-    0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1,
-    0,1,0, 0,1,0, 0,1,0, 0,1,0,
-    0,-1,0, 0,-1,0, 0,-1,0, 0,-1,0,
-    -1,0,0, -1,0,0, -1,0,0, -1,0,0,
-};
-
-// 纹理坐标
-const GLfloat texcoos[] = {
-    0,0, 1,0, 1,1, 0,1,
-    0,0, 1,0, 1,1, 0,1,
-    0,0, 1,0, 1,1, 0,1,
-    0,0, 1,0, 1,1, 0,1,
-    0,0, 1,0, 1,1, 0,1,
-    0,0, 1,0, 1,1, 0,1,
-};
-
-// 顶点颜色
-const GLfloat cors[] = {
-    1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
-    1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
-    1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
-    1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
-    1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
-    1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f, 1.0f,1.0f,1.0f,
-};
-
-// 顶点索引
-const GLint indices[] = {
-    0,1,2, 0,2,3,
-    4,5,6, 4,6,7,
-
-    8,9,10, 8,10,11,
-    12,13,14, 12,14,15,
-
-    16,17,18, 16,18,19,
-    20,21,22, 20,22,23,
-};
-
 //----------------------------------------------------------------------------
 //
 GLchar* ReadShaderData(const char* filename, GLsizei &sz)
@@ -179,6 +126,8 @@ static void cursorpos_callback(GLFWwindow *window, double x, double y)
 int main(int argc, char *argv[])
 {
     create_graphic();
+    create_assetscache();
+
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     glfwInit();
@@ -201,8 +150,10 @@ int main(int argc, char *argv[])
 
     // 读取UI纹理和fnt纹理
     GLuint fntText = LoadGLTextures("Data/fnt_arial.tga");
-    FntFile fntFile;
-    fntFile.loadFntFile("Data/fnt_arial.fnt");
+    FntFile* fntFile = new fntFile;
+    fntFile->loadFntFile("Data/fnt_arial.fnt");
+
+    cache->push(1, fntFile);
 
 
     GLuint tex1 = LoadGLTextures("Data/demo.tga");
@@ -257,6 +208,9 @@ int main(int argc, char *argv[])
     {
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
+
+        gp->setView(width, height);
+
         float ratio = (float) width / (float) height;
         glViewport(0, 0, width, height);                // 把图像按照指定宽,高显示到屏幕上
         glMatrixMode(GL_PROJECTION);                    // 选择透视矩阵
@@ -267,8 +221,6 @@ int main(int argc, char *argv[])
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // UI
-        gp->render();
         // Model
 
 
@@ -277,30 +229,9 @@ int main(int argc, char *argv[])
 
         // 两个有无发现贴图对比
 
-
+        // UI
+        gp->render();
         gluLookAt(0.0f,0.0f,-3.0f, 0.0f,0.0f,0.0f, 0.0f,1.0f,0.0);
-
-        //float r  = 50 * (float)glfwGetTime();
-        glPushMatrix();
-            glRotatef(45, 1.0f, 0.0f, 0.0f);
-            glRotatef(45, 0.0f, 1.0f, 0.0f);
-
-            glBindTexture(GL_TEXTURE_2D, tex1);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glVertexPointer(3, GL_FLOAT, 0, vers);
-
-            glEnableClientState(GL_NORMAL_ARRAY);
-            glNormalPointer(GL_FLOAT, 0, nors);
-
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glTexCoordPointer(2, GL_FLOAT, 0, texcoos);
-
-            glEnableClientState(GL_COLOR_ARRAY);
-            glColorPointer(3, GL_FLOAT, 0, cors);
-
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, indices);
-
-        glPopMatrix();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -308,7 +239,9 @@ int main(int argc, char *argv[])
 
     glfwDestroyWindow(window);
     glfwTerminate();
+
     destroy_graphic();
+    destroy_assetscache();
 
     return EXIT_SUCCESS;
 }

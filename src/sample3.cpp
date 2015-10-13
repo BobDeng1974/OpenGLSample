@@ -375,6 +375,8 @@ int main(int argc, char *argv[])
 		glPushMatrix();
 		glLoadIdentity();
 
+		glTranslatef(mHalfWidth - 100, mHalfHeight - 100, 0);
+
 		glDisable(GL_LIGHTING);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_FOG);
@@ -409,7 +411,6 @@ int main(int argc, char *argv[])
 		glMatrixMode(GL_MODELVIEW);
 		glPopAttrib();
 		glPopClientAttrib();
-
 
         glfwSwapBuffers(window);
         glfwPollEvents();

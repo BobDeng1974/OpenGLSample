@@ -84,6 +84,14 @@ namespace Simple
     void create_graphic();
     void destroy_graphic();
 
+    class rdUV
+    {
+    public:
+        float u,v;
+        explicit rdUV():u(0), v(0) {}
+        rdUV(float u, float v):u(u),v(v){}
+    };
+
     // 最基础的UI,这里不使用纹理来进行直接使用颜色
     class rdPoint
     {
@@ -134,6 +142,14 @@ namespace Simple
         rdTexture(unsigned int t, float ua, float ub, float va, float vb):tex(t), u0(ua), v0(va), u1(ub), v1(vb){}
         float u0, v0, u1, v1;
         unsigned int tex;
+    };
+
+    class rdFntArea
+    {
+    public:
+        rdUV uv[4];
+        rdPoint pos[4];
+        rdColor cr[4];
     };
 
     //--------------------------------------------
@@ -228,11 +244,13 @@ namespace Simple
     public:
         explicit Label();
         Label(const std::string& str);
+        void setString(const std::string& str);
         void setFntFile(FntFile* fnt) { mFnt = fnt; }
         virtual void draw(float x = 0, float y = 0);
     protected:
         std::string mString;
         FntFile* mFnt;
+        vector<rdFntArea> mAreas;
     };
     //-------------------------------------------
     class Slider : public Window
