@@ -682,36 +682,40 @@ namespace Simple
         vector<rdFntArea>::iterator i = mAreas.begin();
         for (; i != mAreas.end(); ++i)
         {
-            rdFntArea a = (*i);
+            rdFntArea& a = (*i);
 
             unsigned int idx = gp->getVertexIndex();
             gp->bindtextrue(t.tex);
 
             // 1
-            gp->vertex(p.x + x, p.y + y, 0);
+            gp->vertex(a.pos[0].x, a.pos[0].y, a.pos[0].z);
+            //gp->color(a.cr[0].r, a.cr[0].g, a.cr[0].b);
             gp->color(c.r, c.g, c.b);
-            gp->uv(t.u0, t.v0);
+            gp->uv(a.uv[0].u, a.uv[0].v);
             gp->normal(0, 0, 1);
             gp->next_vertex();
 
             // 2
-            gp->vertex(p.x + x + s.w, p.y + y, 0);
+            gp->vertex(a.pos[1].x, a.pos[1].y, a.pos[1].z);
+            //gp->color(a.cr[1].r, a.cr[1].g, a.cr[1].b);
             gp->color(c.r, c.g, c.b);
-            gp->uv(t.u1, t.v0);
+            gp->uv(a.uv[1].u, a.uv[1].v);
             gp->normal(0, 0, 1);
             gp->next_vertex();
 
             // 3
-            gp->vertex(p.x + x + s.w, p.y + y + s.h, 0);
+            gp->vertex(a.pos[2].x, a.pos[2].y, a.pos[2].z);
+            //gp->color(a.cr[2].r, a.cr[2].g, a.cr[2].b);
             gp->color(c.r, c.g, c.b);
-            gp->uv(t.u1, t.v1);
+            gp->uv(a.uv[2].u, a.uv[2].v);
             gp->normal(0, 0, 1);
             gp->next_vertex();
 
             // 4
-            gp->vertex(p.x + x, p.y + y + s.h, 0);
+            gp->vertex(a.pos[3].x, a.pos[3].y, a.pos[3].z);
+            //gp->color(a.cr[3].r, a.cr[3].g, a.cr[3].b);
             gp->color(c.r, c.g, c.b);
-            gp->uv(t.u0, t.v1);
+            gp->uv(a.uv[3].u, a.uv[3].v);
             gp->normal(0, 0, 1);
             gp->next_vertex();
 

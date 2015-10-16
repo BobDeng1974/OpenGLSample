@@ -30,15 +30,15 @@ int utf8ToUnicode(const char *s, int *bytes)
     return 0;
 }
 
-int converToUnicode(const char* s, size_t sz, IntVector* v);
+int converToUnicode(const char* s, size_t sz, IntVector* v)
 {
     size_t e = 0;
     const char* rs = s;
     int nd = 0;
     while (e < sz)
     {
-        int c = utf8ToUnicode(rs, nd);
-        v->push(c);
+        int c = utf8ToUnicode(rs, &nd);
+        v->push_back(c);
         e += nd;
         rs = s + e;
     }

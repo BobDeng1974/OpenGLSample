@@ -5,6 +5,8 @@
 #include <string.h>
 #include <vector>
 
+using namespace std;
+
 typedef vector<int> IntVector;
 
 /** \brief »ñÈ¡utf8×Ö·û´®µÄunicodeÂë

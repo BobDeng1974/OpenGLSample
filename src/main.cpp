@@ -125,6 +125,8 @@ static void cursorpos_callback(GLFWwindow *window, double x, double y)
 //
 int main(int argc, char *argv[])
 {
+    using namespace fnt_space;
+
     create_graphic();
     create_assetscache();
 
@@ -150,7 +152,7 @@ int main(int argc, char *argv[])
 
     // 读取UI纹理和fnt纹理
     GLuint fntText = LoadGLTextures("Data/fnt_arial.tga");
-    FntFile* fntFile = new fntFile;
+    FntFile* fntFile = new FntFile;
     fntFile->loadFntFile("Data/fnt_arial.fnt");
 
     cache->push(1, fntFile);
