@@ -14,7 +14,7 @@ typedef vector<int> IntVector;
  * \return int unicode值
  *
  */
-int utf8ToUnicode(char *s, int *bytes);
+int utf8ToUnicode(const char *s, int *bytes);
 
 
 /** \brief 获取unicode码的数组
@@ -25,6 +25,6 @@ int utf8ToUnicode(char *s, int *bytes);
  * \return int
  *
  */
-int converToUnicode(char* s, size_t sz, IntVector* v);
+int converToUnicode(const char* s, size_t sz, IntVector* v);
 
 #endif // __STRINGCODE_H__

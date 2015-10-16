@@ -3,7 +3,7 @@
 
 
 
-int utf8ToUnicode(char *s, int *bytes)
+int utf8ToUnicode(const char *s, int *bytes)
 {
     if ((0x80 & s[0]) == 0)//一个字节的UTF-8
     {
@@ -30,10 +30,10 @@ int utf8ToUnicode(char *s, int *bytes)
     return 0;
 }
 
-int converToUnicode(char* s, size_t sz, IntVector* v);
+int converToUnicode(const char* s, size_t sz, IntVector* v);
 {
     size_t e = 0;
-    char* rs = s;
+    const char* rs = s;
     int nd = 0;
     while (e < sz)
     {

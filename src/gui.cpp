@@ -607,7 +607,7 @@ namespace Simple
     //
     void Label::setString(const std::string& str)
     {
-        using fnt_space;
+        using namespace fnt_space;
         mAreas.clear();
         mString = str;
 
@@ -677,10 +677,10 @@ namespace Simple
 
         rdTexture &t = mTexture;
         rdPoint &p = mPosition;
+        rdColor &c = mColor;
 
-
-        vector<rdFntArea>::iterator i = mArea.begin();
-        for (; i != mArea.end(); ++i)
+        vector<rdFntArea>::iterator i = mAreas.begin();
+        for (; i != mAreas.end(); ++i)
         {
             rdFntArea a = (*i);
 
