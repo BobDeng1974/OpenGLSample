@@ -298,3 +298,44 @@ bool ReadFileData(const char* filename, char* data, size_t &sz)
     return ret;
 }
 
+unsigned int LoadGLBitmap24(const char* filename)
+{
+    unsigned int tex = 0;
+    FILE* fp = fopen(filename, "rb");
+    if (!fp)
+        return 0;
+
+    BitmapFileHeader fileheader;
+    BitmapInfoHeader infohead;
+
+    fread(&fileheader, sizeof(BitmapFileHeader), 1, fp);
+    fread(&infohead, sizeof(BitmapInfoHeader), 1, fp);
+
+    int width = infohead.width;
+    int height = infohead.height;
+    int bitcount = infohead.bitcount;
+
+    if (bitcount == 24)
+    {
+        int num = width * height;
+        fseek(fp, fileheader.offbits, SEEK_SET) ;
+
+        RGB* img = new RGB[num];
+        fread(img, sizeof(RGB) * num, 1, fp);
+
+        for (int i = 0; i < num; ++i)
+            SwapBGR2RGB(img[i]);
+
+        glGenTextures(1, &tex);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Linear Min Filter
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Linear Mag Filter
+        glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &img->red);
+
+        delete[] img;
+    }
+
+    fclose(fp);
+    return tex;
+}
+

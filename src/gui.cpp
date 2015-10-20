@@ -147,7 +147,7 @@ namespace Simple
         glEnableClientState(GL_COLOR_ARRAY);
         glColorPointer(3, GL_FLOAT, 0, t->colors);
 
-        glDrawElements(GL_QUADS, t->num_trangles * 3, GL_UNSIGNED_INT, t->vertexs);
+        glDrawElements(GL_QUADS, t->num_trangles * 3, GL_UNSIGNED_INT, t->indexs);
 
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);
