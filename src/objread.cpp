@@ -91,7 +91,7 @@ void obj_destory(obj_render_t* t)
     delete t;
 }
 
-void obj_read(const char* filename, obj_data_t* t)
+void obj_read(const char* obj, const char* mtl, obj_data_t* t)
 {
 
 }
