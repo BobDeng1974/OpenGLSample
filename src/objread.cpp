@@ -1,5 +1,6 @@
 
 #include "objread.h"
+#include "datalib.h"
 
 
 obj_data_t* obj_create()
@@ -93,7 +94,72 @@ void obj_destory(obj_render_t* t)
 
 void obj_read(const char* obj, const char* mtl, obj_data_t* t)
 {
+    char buff[256];
+    FILE *ofp = fopen(obj, "r");
 
+    st_node* vt_head = create_node();
+    st_node* vn_head = create_node();
+    st_node* v_head = create_node();
+    st_node* f_head = create_node();
+
+    st_node* vt_tmp = vt_head;
+    st_node* vn_tmp = vn_head;
+    st_node* v_tmp = v_head;
+    st_node* f_tmp = f_head;
+
+    while (fgets(buff, 256, ofp) != EOF)
+    {
+        if (memcmp(buff, "vt", 2) == 0)
+        {
+            obj_uv* v = new obj_uv();
+            sscanf(buff + 3, "%f %f", &v->u, &v->v);
+            vt_tmp = add_node(vt_tmp, v);
+        }
+        else if (memcmp(buff, "vn", 2) == 0)
+        {
+            obj_vect3* v = new obj_vect3();
+            sscanf(buff + 3, "%f %f %f", &v->x, &v->y, &v->z);
+            vn_tmp = add_node(vn_tmp, v);
+        }
+        else if (memcmp(buff, "v ", 2) == 0)
+        {
+            obj_vect3* v = new obj_vect3();
+            sscanf(buff + 2, "%f %f %f", &v->x, &v->y, &v->z);
+            v_tmp = add_node(v_tmp, v);
+        }
+        else if (memcmp(buff, "f ", 2) == 0)
+        {
+            obj_face* v = new obj_face();
+            sscanf(buff + 2, "%d/%d/%d %d/%d/%d %d/%d/%d",
+                   &v->a.x, &v->a.y, &v->a.z,
+                   &v->b.x, &v->b.y, &v->b.z,
+                   &v->c.x, &v->c.y, &v->c.z);
+            f_tmp = add_node(f_tmp, v);
+        }
+    }
+    fclose(ofp);
+
+    FILE *mfp = fopen(mtl, "r");
+    while (fgets(buff, 256, mfp) != EOF)
+    {
+        if (memcmp(buff, "Ka", 2) == 0)
+        {
+            sscanf(buff + 2, "%f %f %f", &t->Ka.x, &t->Ka.y, &t->Ka.z);
+        }
+        else if (memcmp(buff, "Kd", 2) == 0)
+        {
+            sscanf(buff + 2, "%f %f %f", &t->Kd.x, &t->Kd.y, &t->Kd.z);
+        }
+        else if (memcmp(buff, "Ks", 2) == 0)
+        {
+            sscanf(buff + 2, "%f %f %f", &t->Ks.x, &t->Ks.y, &t->Ks.z);
+        }
+        else if (memcmp(buff, "map_Kd", 6) == 0)
+        {
+            memcpy(t->map_Kd, buff + 7, 32);
+        }
+    }
+    fclose(mfp);
 }
 
 
