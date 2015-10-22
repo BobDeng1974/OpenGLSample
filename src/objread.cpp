@@ -71,7 +71,9 @@ obj_render_t* obj_create_render(obj_data_t* l)
         set_vertex_data((i + 2) * 3, p, v3, vt3, vn3);
     }
 
-    p->tex = LoadGLBitmap24(l->map_Kd);
+    char path[128] = {0};
+    sprintf(path, "%s%s", l->data_path, l->map_Kd);
+    p->tex = LoadGLBitmap24(path);
 
     memcpy(p->Ka, &l->Ka, sizeof(obj_vect3));
     memcpy(p->Kd, &l->Kd, sizeof(obj_vect3));
@@ -107,28 +109,37 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
     st_node* v_tmp = v_head;
     st_node* f_tmp = f_head;
 
+    int vt_num = 0;
+    int vn_num = 0;
+    int v_num = 0;
+    int f_num = 0;
+
     while (fgets(buff, 256, ofp) != EOF)
     {
         if (memcmp(buff, "vt", 2) == 0)
         {
+            vt_num++;
             obj_uv* v = new obj_uv();
             sscanf(buff + 3, "%f %f", &v->u, &v->v);
             vt_tmp = add_node(vt_tmp, v);
         }
         else if (memcmp(buff, "vn", 2) == 0)
         {
+            vn_num++;
             obj_vect3* v = new obj_vect3();
             sscanf(buff + 3, "%f %f %f", &v->x, &v->y, &v->z);
             vn_tmp = add_node(vn_tmp, v);
         }
         else if (memcmp(buff, "v ", 2) == 0)
         {
+            v_num++;
             obj_vect3* v = new obj_vect3();
             sscanf(buff + 2, "%f %f %f", &v->x, &v->y, &v->z);
             v_tmp = add_node(v_tmp, v);
         }
         else if (memcmp(buff, "f ", 2) == 0)
         {
+            f_num++;
             obj_face* v = new obj_face();
             sscanf(buff + 2, "%d/%d/%d %d/%d/%d %d/%d/%d",
                    &v->a.x, &v->a.y, &v->a.z,
@@ -138,6 +149,69 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
         }
     }
     fclose(ofp);
+
+    // 存储到结构体里面
+    t->num_vertexs = v_num;
+    t->num_uv = vt_num;
+    t->num_normal = vn_num;
+    t->num_face = f_num;
+
+    t->v = new obj_vect3[v_num];
+    t->vt = new obj_uv[vt_num];
+    t->vn = new obj_vect3[vn_num];
+    t->f = new obj_face[f_num];
+
+    v_tmp = v_head;
+    vt_tmp = vt_head;
+    vn_tmp = vn_head;
+    f_tmp = f_head;
+
+    st_node* del_tmp = NULL;
+
+    int i = 0;
+    while (v_tmp != NULL)
+    {
+        memcpy(t->v[i], v_tmp.data, sizeof(obj_vect3));
+        del_tmp = v_tmp;
+        v_tmp = v_tmp->next;
+        delete del_tmp->data;
+        i++;
+    }
+
+    i = 0;
+    while (vt_tmp != NULL)
+    {
+        memcpy(t->vt[i], vt_tmp.data, sizeof(obj_uv));
+        del_tmp = vt_tmp;
+        vt_tmp = vt_tmp->next;
+        delete del_tmp->data;
+        i++;
+    }
+
+    i = 0;
+    while (vn_tmp != NULL)
+    {
+        memcpy(t->vn[i], vn_tmp.data, sizeof(obj_vect3));
+        del_tmp = vn_tmp;
+        vn_tmp = vn_tmp->next;
+        delete del_tmp->data;
+        i++;
+    }
+
+    i = 0;
+    while (f_tmp != NULL)
+    {
+        memcpy(t->f[i], f_tmp.data, sizeof(obj_face));
+        del_tmp = f_tmp;
+        f_tmp = f_tmp->next;
+        delete f_tmp->data;
+        i++;
+    }
+
+    remove_nodes(v_tmp);
+    remove_nodes(vt_tmp);
+    remove_nodes(vn_tmp);
+    remove_nodes(f_tmp);
 
     FILE *mfp = fopen(mtl, "r");
     while (fgets(buff, 256, mfp) != EOF)
@@ -160,6 +234,21 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
         }
     }
     fclose(mfp);
+
+    // 处理一下获取最终的目录
+    size_t sz = sizoef(mtl);
+    int i = sz - 1;
+    while (i > 0)
+    {
+        if (mtl[i] == '/' || mtl[i] == '\\')
+            break;
+        i--;
+    }
+    // 保存路径
+    if (i > 0)
+    {
+        memcpy(t->data_path, mtl, i);
+    }
 }
 
 

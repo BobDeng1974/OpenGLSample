@@ -14,5 +14,6 @@ struct st_node
 st_node* create_node();
 int get_node_num(st_node* head);
 st_node* add_node(st_node* prev, void* data);
+void remove_nodes(st_node* head);
 
 #endif //__DATA_LIB_H__

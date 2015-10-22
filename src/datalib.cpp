@@ -28,3 +28,16 @@ int get_node_num(st_node* head)
     }
     return num;
 }
+
+void remove_nodes(st_node* head)
+{
+    st_node* t = head;
+    st_node* tmp = NULL;
+    while (t != NULL)
+    {
+        tmp = t;
+        t = t->next;
+        delete tmp;
+    }
+    delete head;
+}

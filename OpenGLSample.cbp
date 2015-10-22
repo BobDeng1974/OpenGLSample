@@ -39,6 +39,8 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="src/datalib.cpp" />
+		<Unit filename="src/datalib.h" />
 		<Unit filename="src/fntloader.cpp" />
 		<Unit filename="src/fntloader.h" />
 		<Unit filename="src/gui.cpp" />
