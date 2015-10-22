@@ -1,7 +1,7 @@
 
 #include "objread.h"
 #include "datalib.h"
-
+#include "texture.h"
 
 obj_data_t* obj_create()
 {
@@ -22,14 +22,14 @@ void obj_destory(obj_data_t* t)
 
 inline void set_vertex_data(unsigned int i, obj_render_t* p, obj_vect3* v, obj_uv* vt, obj_vect3* vn)
 {
-    p->v[i] = v.x;
-    p->v[i + 1] = v.y;
-    p->v[i + 2] = v.z;
-    p->vt[i] = vt.u;
-    p->vt[i + 1] = vt.v;
-    p->vn[i] = vn.x;
-    p->vn[i + 1] = vn.y;
-    p->vn[i + 2] = vn.z;
+    p->v[i] = v->x;
+    p->v[i + 1] = v->y;
+    p->v[i + 2] = v->z;
+    p->vt[i] = vt->u;
+    p->vt[i + 1] = vt->v;
+    p->vn[i] = vn->x;
+    p->vn[i + 1] = vn->y;
+    p->vn[i + 2] = vn->z;
 }
 
 obj_render_t* obj_create_render(obj_data_t* l)
@@ -48,23 +48,23 @@ obj_render_t* obj_create_render(obj_data_t* l)
 
     for (unsigned short i = 0; i < num_face; ++i)
     {
-        obj_face* f = l->f[i];
+        obj_face* f = &l->f[i];
 
-        obj_idx3& a = f.a;
-        obj_idx3& b = f.b;
-        obj_idx3& c = f.c;
+        obj_idx3& a = f->a;
+        obj_idx3& b = f->b;
+        obj_idx3& c = f->c;
 
-        obj_vect3* v1 = l->v[a.v];
-        obj_vect3* v2 = l->v[b.v];
-        obj_vect3* v3 = l->v[c.v];
+        obj_vect3* v1 = &l->v[a.v];
+        obj_vect3* v2 = &l->v[b.v];
+        obj_vect3* v3 = &l->v[c.v];
 
-        obj_uv* vt1 = l->vt[a.vt];
-        obj_uv* vt2 = l->vt[b.vt];
-        obj_uv* vt3 = l->vt[c.vt];
+        obj_uv* vt1 = &l->vt[a.vt];
+        obj_uv* vt2 = &l->vt[b.vt];
+        obj_uv* vt3 = &l->vt[c.vt];
 
-        obj_vect3* vn1 = l->vn[a.vn];
-        obj_vect3* vn2 = l->vn[b.vn];
-        obj_vect3* vn3 = l->vn[c.vn];
+        obj_vect3* vn1 = &l->vn[a.vn];
+        obj_vect3* vn2 = &l->vn[b.vn];
+        obj_vect3* vn3 = &l->vn[c.vn];
 
         set_vertex_data(i * 3, p, v1, vt1, vn1);
         set_vertex_data((i + 1) * 3, p, v2, vt2, vn2);
@@ -114,7 +114,7 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
     int v_num = 0;
     int f_num = 0;
 
-    while (fgets(buff, 256, ofp) != EOF)
+    while (fgets(buff, 256, ofp) != NULL)
     {
         if (memcmp(buff, "vt", 2) == 0)
         {
@@ -142,9 +142,9 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
             f_num++;
             obj_face* v = new obj_face();
             sscanf(buff + 2, "%d/%d/%d %d/%d/%d %d/%d/%d",
-                   &v->a.x, &v->a.y, &v->a.z,
-                   &v->b.x, &v->b.y, &v->b.z,
-                   &v->c.x, &v->c.y, &v->c.z);
+                   &v->a.v, &v->a.vt, &v->a.vn,
+                   &v->b.v, &v->b.vt, &v->b.vn,
+                   &v->c.v, &v->c.vt, &v->c.vn);
             f_tmp = add_node(f_tmp, v);
         }
     }
@@ -171,7 +171,7 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
     int i = 0;
     while (v_tmp != NULL)
     {
-        memcpy(t->v[i], v_tmp.data, sizeof(obj_vect3));
+        memcpy(&t->v[i], v_tmp->data, sizeof(obj_vect3));
         del_tmp = v_tmp;
         v_tmp = v_tmp->next;
         delete del_tmp->data;
@@ -181,7 +181,7 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
     i = 0;
     while (vt_tmp != NULL)
     {
-        memcpy(t->vt[i], vt_tmp.data, sizeof(obj_uv));
+        memcpy(&t->vt[i], vt_tmp->data, sizeof(obj_uv));
         del_tmp = vt_tmp;
         vt_tmp = vt_tmp->next;
         delete del_tmp->data;
@@ -191,7 +191,7 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
     i = 0;
     while (vn_tmp != NULL)
     {
-        memcpy(t->vn[i], vn_tmp.data, sizeof(obj_vect3));
+        memcpy(&t->vn[i], vn_tmp->data, sizeof(obj_vect3));
         del_tmp = vn_tmp;
         vn_tmp = vn_tmp->next;
         delete del_tmp->data;
@@ -201,7 +201,7 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
     i = 0;
     while (f_tmp != NULL)
     {
-        memcpy(t->f[i], f_tmp.data, sizeof(obj_face));
+        memcpy(&t->f[i], f_tmp->data, sizeof(obj_face));
         del_tmp = f_tmp;
         f_tmp = f_tmp->next;
         delete f_tmp->data;
@@ -214,7 +214,7 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
     remove_nodes(f_tmp);
 
     FILE *mfp = fopen(mtl, "r");
-    while (fgets(buff, 256, mfp) != EOF)
+    while (fgets(buff, 256, mfp) != NULL)
     {
         if (memcmp(buff, "Ka", 2) == 0)
         {
@@ -236,8 +236,8 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
     fclose(mfp);
 
     // 处理一下获取最终的目录
-    size_t sz = sizoef(mtl);
-    int i = sz - 1;
+    size_t sz = sizeof(mtl);
+    i = sz - 1;
     while (i > 0)
     {
         if (mtl[i] == '/' || mtl[i] == '\\')

@@ -1,6 +1,11 @@
 #ifndef __DATA_LIB_H__
 #define __DATA_LIB_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
 struct st_node
 {
     union{

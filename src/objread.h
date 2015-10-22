@@ -4,6 +4,12 @@
 // 这是一个简单的obj读取例子，不包含所有的obj内部的数据，这个需要更详细的处理，具体
 // 需要自己学习的时候根据需要去获取
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+
+
 struct obj_idx3
 {
     int v,vt,vn;
