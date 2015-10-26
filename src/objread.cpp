@@ -10,7 +10,7 @@ obj_data_t* obj_create()
     return p;
 }
 
-void obj_destory(obj_data_t* t)
+void obj_destory_data(obj_data_t* t)
 {
     assert(t != NULL);
     delete[] (t->v);
@@ -83,7 +83,7 @@ obj_render_t* obj_create_render(obj_data_t* l)
     return p;
 }
 
-void obj_destory(obj_render_t* t)
+void obj_destory_render(obj_render_t* t)
 {
     assert(t != NULL);
 
@@ -161,10 +161,10 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
     t->vn = new obj_vect3[vn_num];
     t->f = new obj_face[f_num];
 
-    v_tmp = v_head;
-    vt_tmp = vt_head;
-    vn_tmp = vn_head;
-    f_tmp = f_head;
+    v_tmp = (st_node*)v_head->next;
+    vt_tmp = (st_node*)vt_head->next;
+    vn_tmp = (st_node*)vn_head->next;
+    f_tmp = (st_node*)f_head->next;
 
     st_node* del_tmp = NULL;
 
@@ -204,14 +204,14 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
         memcpy(&t->f[i], f_tmp->data, sizeof(obj_face));
         del_tmp = f_tmp;
         f_tmp = f_tmp->next;
-        delete f_tmp->data;
+        delete del_tmp->data;
         i++;
     }
 
-    remove_nodes(v_tmp);
-    remove_nodes(vt_tmp);
-    remove_nodes(vn_tmp);
-    remove_nodes(f_tmp);
+    remove_nodes(v_head);
+    remove_nodes(vt_head);
+    remove_nodes(vn_head);
+    remove_nodes(f_head);
 
     FILE *mfp = fopen(mtl, "r");
     while (fgets(buff, 256, mfp) != NULL)
@@ -281,7 +281,7 @@ void obj_render(obj_render_t* t)
     //glEnableClientState(GL_COLOR_ARRAY);
     //glColorPointer(3, GL_FLOAT, 0, t->colors);
 
-    glDrawElements(GL_QUADS, t->num_index, GL_UNSIGNED_INT, t->indes);
+    glDrawElements(GL_TRIANGLE_STRIP, t->num_index, GL_UNSIGNED_INT, t->indes);
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);

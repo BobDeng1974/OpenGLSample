@@ -1,6 +1,9 @@
 /**
 整体要实现的东东:
 简单的OpenGL程序使用glfw来实现
+
+实现发现贴图
+
 */
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>

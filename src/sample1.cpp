@@ -1,6 +1,13 @@
 /**
 整体要实现的东东:
 简单的OpenGL程序使用glfw来实现
+
+
+简单的OpenGL例子
+包含bmp图片加载
+GLSL例子，实现颜色交换
+绘制一个立方体
+
 */
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>

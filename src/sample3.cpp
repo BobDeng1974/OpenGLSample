@@ -1,6 +1,10 @@
 /**
 整体要实现的东东:
 简单的OpenGL程序使用glfw来实现
+
+简单GUI的实现原理
+
+
 */
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>

@@ -39,5 +39,4 @@ void remove_nodes(st_node* head)
         t = t->next;
         delete tmp;
     }
-    delete head;
 }
