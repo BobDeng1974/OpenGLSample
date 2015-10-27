@@ -3,6 +3,9 @@
 #include "datalib.h"
 #include "texture.h"
 
+
+//===================================
+
 obj_data_t* obj_create()
 {
     obj_data_t *p = new obj_data_t();
@@ -20,16 +23,22 @@ void obj_destory_data(obj_data_t* t)
     delete t;
 }
 
+
 inline void set_vertex_data(unsigned int i, obj_render_t* p, obj_vect3* v, obj_uv* vt, obj_vect3* vn)
 {
-    p->v[i] = v->x;
-    p->v[i + 1] = v->y;
-    p->v[i + 2] = v->z;
-    p->vt[i] = vt->u;
-    p->vt[i + 1] = vt->v;
-    p->vn[i] = vn->x;
-    p->vn[i + 1] = vn->y;
-    p->vn[i + 2] = vn->z;
+    unsigned int j = i * 3;
+    unsigned int jt = i * 2;
+
+    p->v[j] = v->x;
+    p->v[j + 1] = v->y;
+    p->v[j + 2] = v->z;
+
+    p->vt[jt] = vt->u;
+    p->vt[jt + 1] = vt->v;
+
+    p->vn[j] = vn->x;
+    p->vn[j + 1] = vn->y;
+    p->vn[j + 2] = vn->z;
 }
 
 obj_render_t* obj_create_render(obj_data_t* l)
@@ -39,12 +48,14 @@ obj_render_t* obj_create_render(obj_data_t* l)
     unsigned short num_vertexs = l->num_vertexs;
     unsigned short num_face = l->num_face;
 
-    p->v = new float[num_vertexs * 3 * 3];
-    p->vt = new float[num_vertexs * 3 * 2];
-    p->vn = new float[num_vertexs * 3 * 3];
+    p->v = new float[num_face * 3 * 3];
+    p->vt = new float[num_face * 3 * 2];
+    p->vn = new float[num_face * 3 * 3];
 
     p->num_index = num_face * 3;
     p->indes = new unsigned int[num_face * 3];
+    for (unsigned short  i = 0; i < p->num_index; ++i)
+        p->indes[i] = i;
 
     for (unsigned short i = 0; i < num_face; ++i)
     {
@@ -54,27 +65,26 @@ obj_render_t* obj_create_render(obj_data_t* l)
         obj_idx3& b = f->b;
         obj_idx3& c = f->c;
 
-        obj_vect3* v1 = &l->v[a.v];
-        obj_vect3* v2 = &l->v[b.v];
-        obj_vect3* v3 = &l->v[c.v];
+        obj_vect3* v1 = &l->v[a.v - 1];
+        obj_vect3* v2 = &l->v[b.v - 1];
+        obj_vect3* v3 = &l->v[c.v - 1];
 
-        obj_uv* vt1 = &l->vt[a.vt];
-        obj_uv* vt2 = &l->vt[b.vt];
-        obj_uv* vt3 = &l->vt[c.vt];
+        obj_uv* vt1 = &l->vt[a.vt - 1];
+        obj_uv* vt2 = &l->vt[b.vt - 1];
+        obj_uv* vt3 = &l->vt[c.vt - 1];
 
-        obj_vect3* vn1 = &l->vn[a.vn];
-        obj_vect3* vn2 = &l->vn[b.vn];
-        obj_vect3* vn3 = &l->vn[c.vn];
+        obj_vect3* vn1 = &l->vn[a.vn - 1];
+        obj_vect3* vn2 = &l->vn[b.vn - 1];
+        obj_vect3* vn3 = &l->vn[c.vn - 1];
 
         set_vertex_data(i * 3, p, v1, vt1, vn1);
-        set_vertex_data((i + 1) * 3, p, v2, vt2, vn2);
-        set_vertex_data((i + 2) * 3, p, v3, vt3, vn3);
+        set_vertex_data(i * 3 + 1, p, v2, vt2, vn2);
+        set_vertex_data(i * 3 + 2, p, v3, vt3, vn3);
     }
 
     char path[128] = {0};
-    sprintf(path, "%s%s", l->data_path, l->map_Kd);
+    sprintf(path, "%s/%s", l->data_path, l->map_Kd);
     p->tex = LoadGLBitmap24(path);
-
     memcpy(p->Ka, &l->Ka, sizeof(obj_vect3));
     memcpy(p->Kd, &l->Kd, sizeof(obj_vect3));
     memcpy(p->Ks, &l->Ks, sizeof(obj_vect3));
@@ -87,11 +97,49 @@ void obj_destory_render(obj_render_t* t)
 {
     assert(t != NULL);
 
+    glDeleteTextures(1, &t->tex);
+
     delete[] (t->v);
     delete[] (t->vt);
     delete[] (t->vn);
     delete[] (t->indes);
     delete t;
+}
+
+void obj_render_dump(obj_render_t* t)
+{
+    unsigned int num_index = t->num_index ;
+    unsigned int num = t->num_index * 3;
+    printf("----------- vetex ---------------");
+    for (int i = 0; i < num_index * 3; ++i)
+    {
+        if (i % 3 == 0)
+            printf("\n");
+        printf("%f,", t->v[i]);
+    }
+    printf("\n----------- normal ---------------");
+    for (int i = 0; i < num_index * 3; ++i)
+    {
+        if (i % 3 == 0)
+            printf("\n");
+        printf("%f,", t->vn[i]);
+    }
+
+    printf("\n----------- texture ---------------");
+    for (int i = 0; i < num_index * 2; ++i)
+    {
+        if (i % 2 == 0)
+            printf("\n");
+        printf("%f,", t->vt[i]);
+    }
+
+    printf("\n----------- face ---------------");
+    for (int i = 0; i < num_index; ++i)
+    {
+        if (i % 3 == 0)
+            printf("\n");
+        printf("%d,", t->indes[i]);
+    }
 }
 
 void obj_read(const char* obj, const char* mtl, obj_data_t* t)
@@ -231,12 +279,20 @@ void obj_read(const char* obj, const char* mtl, obj_data_t* t)
         else if (memcmp(buff, "map_Kd", 6) == 0)
         {
             memcpy(t->map_Kd, buff + 7, 32);
+            i = strlen(t->map_Kd);
+            while (i > 0)
+            {
+                if (t->map_Kd[i] == '\n')
+                    t->map_Kd[i] = 0;
+                i--;
+            }
         }
+        memset(buff, 0, 256);
     }
     fclose(mfp);
 
     // 处理一下获取最终的目录
-    size_t sz = sizeof(mtl);
+    size_t sz = strlen(mtl);
     i = sz - 1;
     while (i > 0)
     {
@@ -276,13 +332,17 @@ void obj_render(obj_render_t* t)
     glVertexPointer(3, GL_FLOAT, 0, t->v);
 
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(2, GL_FLAT, 0, t->vt);
+    glTexCoordPointer(2, GL_FLOAT, 0, t->vt);
+
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, 0, t->vn);
 
     //glEnableClientState(GL_COLOR_ARRAY);
     //glColorPointer(3, GL_FLOAT, 0, t->colors);
 
-    glDrawElements(GL_TRIANGLE_STRIP, t->num_index, GL_UNSIGNED_INT, t->indes);
+    glDrawElements(GL_TRIANGLES, t->num_index, GL_UNSIGNED_INT, t->indes);
 
     glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
 }

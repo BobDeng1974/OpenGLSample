@@ -70,6 +70,8 @@ void obj_destory_data(obj_data_t* t);
 obj_render_t* obj_create_render(obj_data_t* l);
 void obj_destory_render(obj_render_t* t);
 
+void obj_render_dump(obj_render_t* t);
+
 void obj_read(const char* obj, const char* mtl, obj_data_t* t);
 void obj_render(obj_render_t* t);
 

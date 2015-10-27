@@ -129,8 +129,9 @@ int main(int argc, char *argv[])
     obj_data_t* t = obj_create();
     obj_read("Data/panel.obj","Data/panel.mtl",t);
     obj_render_t* rt = obj_create_render(t);
+    obj_render_dump(rt);
 
-    float rx = 0.0f;
+    float rx = -90.0f;
     float ry = 0.0f;
 
     while (!glfwWindowShouldClose(window))
@@ -150,8 +151,10 @@ int main(int argc, char *argv[])
         gluLookAt(0.0f,0.0f,-3.0f, 0.0f,0.0f,1.0f, 0.0f,1.0f,0.0);
         glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-        //======================================================================
+        glRotatef(rx + g_roll_y, 1.0f, 0.0f, 0.0f);
+        glRotatef(ry + g_roll_x, 0.0f, 1.0f, 0.0f);
 
+        //======================================================================
         obj_render(rt);
         //======================================================================
         glfwSwapBuffers(window);
