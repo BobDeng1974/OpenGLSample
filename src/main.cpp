@@ -19,6 +19,9 @@
 #include "gui.h"
 #include "fntloader.h"
 
+
+#include "ms3dloader.h"
+
 using namespace Simple;
 
 //=========================================================
@@ -157,6 +160,10 @@ int main(int argc, char *argv[])
 
     cache->push(1, fntFile);
 
+    using namespace ms3d_space;
+
+    ModelRender mrd;
+    mrd.loadModel("Data/ms3ddemo.ms3d");
 
     GLuint tex1 = LoadGLTextures("Data/demo.tga");
     GLuint program = buildProgram("Data/normalmap.vert", "Data/normalmap.frag"); // 使用shader, 把r<->b交换颜色
@@ -225,6 +232,7 @@ int main(int argc, char *argv[])
 
         // Model
 
+        mrd.renderModel();
 
         // 两个球体,主要是材质变换
 

@@ -625,6 +625,9 @@ namespace Simple
         for (IntVector::iterator i = v.begin(); i != v.end(); ++i)
         {
             fnt_char_t* c = mFnt->findFntChar(*i);
+            if (c == NULL)
+                continue;
+
             rdFntArea area;
 
             float x = c->x * 1.0 / width;

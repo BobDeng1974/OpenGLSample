@@ -50,8 +50,6 @@
 		<Unit filename="src/mathlib.h" />
 		<Unit filename="src/ms3dloader.cpp" />
 		<Unit filename="src/ms3dloader.h" />
-		<Unit filename="src/objread.cpp" />
-		<Unit filename="src/objread.h" />
 		<Unit filename="src/stringcode.cpp" />
 		<Unit filename="src/stringcode.h" />
 		<Unit filename="src/texture.cpp" />
