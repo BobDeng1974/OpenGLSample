@@ -93,6 +93,19 @@ bool load_ms3d_file(ms3d_model_t* t, const char* file)
     int& iTotalFrames                 = t->iTotalFrames;
     unsigned short& nNumJoints        = t->nNumJoints;
 
+    t->path;
+    memset(t->path, 0, 20);
+
+    size_t sz = strlen(file);
+    size_t i = 0;
+    while (i < sz)
+    {
+        if (file[i] == '\\' || file[i] == '/')
+            break;
+        t->path[i] = file[i];
+        i++;
+    }
+
     FILE* fp = fopen(file, "rb");
     if (!fp)
         return false;
@@ -465,7 +478,7 @@ unsigned int load_gl_tga(const char* file)
 {
     Texture texture;
     texture.texID = 0;
-    if (LoadTGA(&texture, "Data/ms.tga"))
+    if (LoadTGA(&texture, file))
     {
         glGenTextures(1, &texture.texID);
         glBindTexture(GL_TEXTURE_2D, texture.texID);
@@ -877,7 +890,16 @@ bool gl_load_material(ms3d_model_t* t)
     for (int i = 0; i < t->nNumMaterials; ++i)
     {
         ms3d_material_t* mt = &t->materials[i];
-        mt->id = (unsigned char)load_gl_tga(mt->texture);
+        char tmp[128] = {0};
+        sprintf(tmp, "%s/%s", t->path, mt->texture);
+        size_t offset = strlen(tmp) - 4;
+        if (memcmp(tmp + offset, ".tga", 4) == 0)
+            mt->id = (unsigned char)load_gl_tga(mt->texture);
+        else if (memcmp(tmp + offset, ".bmp", 4) == 0)
+            mt->id = (unsigned char)LoadGLBitmap24(mt->texture);
+        else
+            printf("error can't find load function :%s\n", tmp);
+
     }
 }
 
@@ -885,7 +907,7 @@ bool gl_load_material(ms3d_model_t* t)
 //
 void gl_bind_material(const ms3d_model_t* t, int materialIndex)
 {
-if (materialIndex < 0 || materialIndex >= t->nNumMaterials)
+    if (materialIndex < 0 || materialIndex >= t->nNumMaterials)
 	{
 		glDepthMask(GL_TRUE);
 		glDisable(GL_ALPHA_TEST);
@@ -1066,6 +1088,8 @@ void ModelRender::loadModel(const char* filename)
 
     setup_joints(m_model);
     set_frame(m_model, -1);
+
+    dump_ms3d_file(m_model, "ttt.log");
 }
 
 void ModelRender::renderModel()

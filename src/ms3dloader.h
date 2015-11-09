@@ -348,6 +348,8 @@ struct ms3d_model_t
     float fjointize;
 	int iTransparencyMode;
 	float falphaRef;
+
+	char path[20];
 } ;
 
 ms3d_model_t* create_ms3d_model();
