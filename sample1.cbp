@@ -33,6 +33,12 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add library="glew32" />
+					<Add library="opengl32" />
+					<Add library="glu32" />
+					<Add library="glfw3dll" />
+					<Add library="gdi32" />
+					<Add library="winmm" />
 				</Linker>
 			</Target>
 		</Build>
