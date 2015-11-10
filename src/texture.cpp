@@ -137,7 +137,7 @@ bool LoadUncompressedTGA(Texture * texture, FILE * fn)
 		return false;
 	}
     // Byte Swapping Optimized By Steve Thomas
-	for(GLuint cswap = 0; cswap < (int)tga.sz; cswap += tga.bytes)
+	for(GLuint cswap = 0; cswap < tga.sz; cswap += tga.bytes)
 	{
 		texture->data[cswap] ^= texture->data[cswap+2] ^=
 		texture->data[cswap] ^= texture->data[cswap+2];
